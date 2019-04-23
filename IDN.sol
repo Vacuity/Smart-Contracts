@@ -1,7 +1,4 @@
 contract IDN is ERC721Full {
-    using Counter for Counter.Index;
-    Counter.Index private tokenId;
-
     constructor(
         string name,
         string symbol,
