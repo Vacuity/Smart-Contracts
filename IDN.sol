@@ -8,6 +8,7 @@ contract IDN is ERC721Full {
     {}
 
     function createIDN(
+        address owner,
         string uri,
         string tokenUri
     )
@@ -16,7 +17,7 @@ contract IDN is ERC721Full {
     {
 
         uint256 id = uint256(keccak256(abi.encodePacked(uri)));
-        _mint(msg.sender, id);
+        _mint(owner, id);
         _setTokenURI(id, tokenUri);
         return true;
     }
