@@ -1,6 +1,13 @@
+pragma solidity 0.4.24;
+
+import 'zopenzeppelin-solidity/contracts/token/ERC721/ERC721Full.sol';
+import 'zopenzeppelin-solidity/contracts/token/ERC721/ERC721Mintable.sol';
+import 'zopenzeppelin-solidity/contracts/token/ERC721/ERC721Burnable.sol';
+import 'zopenzeppelin-solidity/contracts/token/ERC721/ERC721Enumerable.sol';
+import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 import "openzeppelin-solidity/contracts/access/Roles.sol";
 
-contract IDN is ERC721Full, ERC721Mintable, ERC721Burnable, ERC721Enumerable {
+contract IDN is ERC721Full, ERC721Mintable, ERC721Burnable, ERC721Enumerable, Ownable {
 
     using Roles for Roles.Role;
     Roles.Role private admins;
@@ -30,4 +37,9 @@ contract IDN is ERC721Full, ERC721Mintable, ERC721Burnable, ERC721Enumerable {
         _setTokenURI(id, tokenUri);
         return true;
     }
+
+    function isSubscribed(address _owner) public returns (bool)  {
+        if (balanceOf(_owner) > 1) return true;
+        return false;
+    }   
 }
