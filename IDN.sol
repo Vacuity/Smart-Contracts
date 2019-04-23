@@ -1,4 +1,10 @@
-contract IDN is ERC721Full {
+import "openzeppelin-solidity/contracts/access/Roles.sol";
+
+contract IDN is ERC721Full, ERC721Mintable, ERC721Burnable, ERC721Enumerable {
+
+    using Roles for Roles.Role;
+    Roles.Role private admins;
+
     constructor(
         string name,
         string symbol,
@@ -9,10 +15,6 @@ contract IDN is ERC721Full {
     {
         admins.addMany(_admins);
     }
-
-    using Roles for Roles.Role;
-
-    Roles.Role private admins;
 
     function createIDN(
         address owner,
