@@ -263,7 +263,7 @@ contract VIOS is ERC20, ERC20Detailed {
     {
         uint tally = 0;
         for (uint idx = 0; idx < voter.length; idx++) {
-            require(!voter[idx].ballots[nominatedTrustee], 'VIOS: Blocked by Authority');
+            require(!voter[idx].ballots[nominatedTrustee].isVeto, 'VIOS: Blocked by Authority');
             tally += voter[idx].ballots[nominatedTrustee].voteCount;
         }
         if(tally > div (totalSupply(), uint256(2)) ){
