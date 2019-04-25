@@ -165,6 +165,7 @@ contract VIOS is ERC20, ERC20Detailed {
     uint256 public constant ELECTORATE_DIVISOR = 2;
     uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 0;
     uint public constant VOTE_PROPOSAL_REMOVE_TRUSTEE = 1;
+    uint public constant DELEGATE_CHAIN_LIMIT = 10;
        
     /**
      * @dev The Authority Node is owned by a multisig wallet that requires 21 signatures. These signers are the Authority Nodes.
@@ -225,9 +226,12 @@ contract VIOS is ERC20, ERC20Detailed {
         // In that scenario, no delegation is made
         // but in other situations, such loops might
         // cause a contract to get "stuck" completely.
-        for (address da = delegateAddr; voter[delegateAddr].ballots[nominatedTrustee].delegate != address(0); da = voter[delegateAddr].ballots[nominatedTrustee].delegate;) {
+        uint count = 0;
+        for (; voter[delegateAddr].ballots[nominatedTrustee].delegate != address(0); delegateAddr = voter[delegateAddr].ballots[nominatedTrustee].delegate;) {
             // We found a loop in the delegation, not allowed.
-            require(da != msg.sender, 'VIOS: recursive delegation not allowed');
+            require(delegateAddr != msg.sender, 'VIOS: recursive delegation not allowed');
+            require(count < DELEGATE_CHAIN_LIMIT, 'VIOS: delegate chain limit reached');
+            count++;
         }
 
         // Since 'sender' is a reference, this will modify 'sender.ballot[nominatedTrustee].voteSpent'
@@ -261,8 +265,8 @@ contract VIOS is ERC20, ERC20Detailed {
         uint tally = 0;
         bool authorized;
         for (uint idx = 0; idx < voter.length; idx++) {
-            if(voter[idx].ballots[nominatedTrustee].proposal != proposal) continue;
-            tally += voter[idx].ballots[nominatedTrustee].voteCount;
+            if(voters[idx].ballots[nominatedTrustee].proposal != proposal) continue;
+            tally += voters[idx].ballots[nominatedTrustee].voteCount;
             if(voter[idx].ballots[nominatedTrustee].authorized) authorized = true;
         }
         require(authorized, 'VIOS: denied by Authority');
