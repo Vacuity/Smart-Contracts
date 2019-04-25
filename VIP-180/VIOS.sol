@@ -274,6 +274,7 @@ contract VIOS is ERC20, ERC20Detailed {
             trustees.remove(nominatedTrustee);
             return true;
         }
+        // TODO: place penalty here
         return false;
     }
 
