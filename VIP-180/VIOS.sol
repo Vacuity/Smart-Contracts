@@ -81,8 +81,8 @@ contract VIOS is ERC20, ERC20Detailed {
     function claimTokens(address to, uint256 value) public onlyMinter returns (bool) {
         require(totalSupply().add(value) <= _cap, "VIOS: cap exceeded");
         require(delegates.has(msg.sender), "VIOS: does not have delegate role");
-        uint256 current_block_number = getCurrentBlockNumber();
-        uint256 balance = TOKENS_PER_BLOCK * (getCurrentBlockNumber() - last_claim_block_number);
+        uint256 current_block_number = 0;
+        uint256 balance = TOKENS_PER_BLOCK * (current_block_number - last_claim_block_number);
         last_claim_block_number = current_block_number;
         require(value <= balance, "VIOS: claim exceeds balance");
         _mint(to, value);
