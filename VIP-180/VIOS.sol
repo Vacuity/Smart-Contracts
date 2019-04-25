@@ -160,7 +160,7 @@ contract VIOS is ERC20, ERC20Detailed {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
 
-    // ********* ANDREW logic ***********//
+    // ********* the ANDREW functions ***********//
 
     struct ballot {
         uint256 weight; // weight is accumulated by delegation
@@ -182,7 +182,7 @@ contract VIOS is ERC20, ERC20Detailed {
     // Declare state variable to store a 'ballotVoter' struct for every possible address.
     mapping(address => voter) public voters;
 
-    function createBallot(address voter, address nominatedTrustee) {
+    function doCreate(address voter, address nominatedTrustee) {
         // In case the argument of 'require' is evaluted to 'false',
         // it will terminate and revert all
         // state and VTHO balance changes. It is often
@@ -201,7 +201,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// Delegate your vote to the voter 'to'.
-    function delegate(address delegateAddr, address nominatedTrustee, uint256 voteCount) {
+    function doDelegate(address delegateAddr, address nominatedTrustee, uint256 voteCount) {
         // assigns reference
         voter storage sender = voter[msg.sender];
         // The Authority address cannot delegate
@@ -231,7 +231,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
-    function vote(uint nominatedTrustee, uint256 voteCount) {
+    function doVote(uint nominatedTrustee, uint256 voteCount) {
         // If 'voter' or 'nominatedTrustee' are out of the range of the array,
         // this will throw automatically and revert all
         // changes.
@@ -246,7 +246,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// @dev Attempts to assign the trustee
-    function assignTrustee(address nominatedTrustee) constant
+    function doAssign(address nominatedTrustee) constant
             returns (bool)
     {
         uint tally = 0;
@@ -263,7 +263,7 @@ contract VIOS is ERC20, ERC20Detailed {
         return false;
     }
 
-    function burnBallot(address nominatedTrustee) constant returns (bool){
+    function doBurn(address nominatedTrustee) constant returns (bool){
         require(auth.isSubscribed(msg.sender), 'VIOS: must be Authority');
         for (uint idx = 0; idx < voter.length; idx++) {
             delete voter[idx].ballots[nominatedTrustee];
