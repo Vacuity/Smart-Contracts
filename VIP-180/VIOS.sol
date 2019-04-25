@@ -194,8 +194,8 @@ contract VIOS is ERC20, ERC20Detailed {
     function doPoll(address[] trustees) {
         require(auth.isSubscribed(msg.sender) || proposalsOption.length == 0, 'VIOS: poll in progress');
         // For every provided proposal names, a new proposal object is created and added to the array's end.
-        proposalsOption = [];
-        voters[];
+        delete proposalsOption;
+        delete voters;
         for (uint i = 0; i < trustees.length; i++) {
             // 'Proposal({...})' will create a temporary Proposal object 
             // 'proposalsOption.push(...)' will append it to the end of 'proposalsOption'.
@@ -236,6 +236,8 @@ contract VIOS is ERC20, ERC20Detailed {
         require(!auth.isSubscribed(msg.sender), 'VIOS: Authority not allowed');
         // Self-delegation is not allowed.
         require(to != msg.sender, 'VIOS: Self-delegation not allowed');
+        require (sender.credits > -1, 'VIOS: no credits');
+        require (sender.credits > 0, 'VIOS: no ballot');
 
         // Forward the delegation as long as
         // 'to' is delegated too.
@@ -257,7 +259,14 @@ contract VIOS is ERC20, ERC20Detailed {
         // Since 'sender' is a reference, this will modify 'sender.ballot[nominatedTrustee].credits'
         sender.delegate = delegateAddr;
         voter storage delegate = voter[delegateAddr];
+        if(delegate.credits < 0) delegate.credits = 0; // allow delegate to resume voting if credits are furnished after her vote
         delegate.credits += sender.credits;
+        sender.credits = -2;
+    }
+
+    function doAuthorize(uint nominateeIndex, bool authorized){
+        require(auth.isSubscribed(msg.sender), 'VIOS: is not Authority');
+        proposalsOption[nominateeIndex].authorized = authorized;
     }
 
     /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
@@ -265,15 +274,14 @@ contract VIOS is ERC20, ERC20Detailed {
         // If 'voter' or 'nominatedTrustee' are out of the range of the array,
         // this will throw automatically and revert all
         // changes.
+        
         voter storage sender = voter[msg.sender];
-        if(auth.isSubscribed(msg.sender)){
-            sender.authorized = yay;
-        }
-        else {
-            require(voteCount <= sender.credits, 'VIOS: insufficient credits');
-            if(yay) proposalsOption[nominateeIndex].yay += sender.delegateWeight;
-            else proposalsOption[nominateeIndex].nay += sender.delegateWeight;
-        }
+        require (sender.credits != -2, 'VIOS: credits delegated');
+        require (sender.credits != -1, 'VIOS: vote already cast');
+        require (sender.credits != 0, 'VIOS: no ballot');
+        if(yay) proposalsOption[nominateeIndex].yay += sender.delegateWeight;
+        else proposalsOption[nominateeIndex].nay += sender.delegateWeight;
+        sender.credits = -1;
     }
 
     /// @dev Attempts to assign the trustee
@@ -291,8 +299,8 @@ contract VIOS is ERC20, ERC20Detailed {
             else {
                 trustees.remove(nominatedTrustee);                
             }
-            proposalsOption = [];
-            voters[];
+            delete proposalsOption;
+            delete voters;
             return true;
         }
         // TODO: place penalty here
