@@ -163,10 +163,9 @@ contract VIOS is ERC20, ERC20Detailed {
     // ********* ANDREW logic ***********//
 
     struct ballot {
-        uint delegateWeight; // delegateWeight is accumulated by delegation
-        uint voteSpent;  // amount of delegateWeight spent
+        uint256 weight; // weight is accumulated by delegation
+        uint256 voteSpent;  // amount of weight spent
         address delegate; // the person that the voter chooses to deleg    
-        address nominatedTrustee; // the trustee being nominated
         bool isVeto;
     }
         
@@ -192,12 +191,12 @@ contract VIOS is ERC20, ERC20Detailed {
         // will currently also consume all of the provided gas
         // (this is planned to change in the future).
         if(auth.isSubscribed(voter)){
-            voters[voter].ballots[nominatedTrustee].delegateWeight = 0;
+            voters[voter].ballots[nominatedTrustee].weight = 0;
             // the Authority address is not allowed to vote
         }
-        else{
-            require(!voters[voter].ballots[nominatedTrustee].voteSpent && (voters[voter].ballots[nominatedTrustee].delegateWeight == 0));
-            voters[voter].ballots[nominatedTrustee].delegateWeight = balanceOf(voter);
+        if(!auth.isSubscribed(voter)){
+            require(!voters[voter].ballots[nominatedTrustee].voteSpent && (voters[voter].ballots[nominatedTrustee].weight == 0));
+            voters[voter].ballots[nominatedTrustee].weight = balanceOf(voter);
         }
     }
 
@@ -209,7 +208,7 @@ contract VIOS is ERC20, ERC20Detailed {
         require(!auth.isSubscribed(msg.sender));
         // Self-delegation is not allowed.
         require(to != msg.sender);
-        require(!sender.ballot[nominatedTrustee].voteSpent);
+        require(!sender.ballots[nominatedTrustee].voteSpent);
 
         // Forward the delegation as long as
         // 'to' is delegated too.
@@ -219,41 +218,39 @@ contract VIOS is ERC20, ERC20Detailed {
         // In that scenario, no delegation is made
         // but in other situations, such loops might
         // cause a contract to get "stuck" completely.
-        while (voter[to].ballot[nominatedTrustee].delegate != address(0)) {
-            to = voter[to].ballot[nominatedTrustee].delegate;
+        while (voter[to].ballots[nominatedTrustee].delegate != address(0)) {
+            to = voter[to].ballots[nominatedTrustee].delegate;
 
             // We found a loop in the delegation, not allowed.
             require(to != msg.sender);
         }
 
         // Since 'sender' is a reference, this will modify 'sender.ballot[nominatedTrustee].voteSpent'
-        sender.ballot[nominatedTrustee].voteSpent = true;
-        sender.ballot[nominatedTrustee].delegate = to;
+        sender.ballots[nominatedTrustee].voteSpent = true;
+        sender.ballots[nominatedTrustee].delegate = to;
         voter storage delegate = voter[to];
-        if (delegate.ballot[nominatedTrustee].voteSpent) {
+        if (delegate.ballots[nominatedTrustee].voteSpent) {
             // If the delegated person already voted, directly add to the number of votes
-            delegate.ballot[nominatedTrustee].voteCount += sender.delegateWeight;
+            delegate.ballots[nominatedTrustee].voteCount += sender.weight;
         } else {
             // If the delegated did not vote yet,
-            // add to her delegateWeight.
-            delegate.ballot[nominatedTrustee].delegateWeight += sender.delegateWeight;
+            // add to her weight.
+            delegate.ballots[nominatedTrustee].weight += sender.weight;
         }
     }
 
     /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
-    function vote(uint nominatedTrustee) {
-        voter storage sender = ballotVoters[msg.sender];
-        require(!sender.voteSpent);
-        sender.voteSpent = true;
-
+    function vote(uint nominatedTrustee, uint256 voteCount) {
         // If 'voter' or 'nominatedTrustee' are out of the range of the array,
         // this will throw automatically and revert all
         // changes.
-        if(auth.isSubscribed(voter)){
-            voters[voter].ballots[nominatedTrustee].isVeto = true;
+        voter storage sender = voter[msg.sender];
+        if(auth.isSubscribed(msg.sender)){
+            sender.ballots[nominatedTrustee].isVeto = true;
         }
         else {
-            delegate.ballot[nominatedTrustee].voteCount += sender.delegateWeight;
+            require(sender.ballots[nominatedTrustee].voteCount + voteCount <= sender.ballots[nominatedTrustee].weight);
+            sender.ballots[nominatedTrustee].voteCount += voteCount;
         }
     }
 
@@ -263,7 +260,7 @@ contract VIOS is ERC20, ERC20Detailed {
     {
         uint tally = 0;
         for (uint idx = 0; idx < voter.length; idx++) {
-            require(!voter[idx].ballots[nominatedTrustee].isVeto, 'VIOS: Blocked by Authority');
+            require(!voter[idx].ballots[nominatedTrustee].isVeto, 'VIOS: Denied by Authority');
             tally += voter[idx].ballots[nominatedTrustee].voteCount;
         }
         if(tally > div (totalSupply(), uint256(2)) ){
