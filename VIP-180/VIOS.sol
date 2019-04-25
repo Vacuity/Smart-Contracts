@@ -172,22 +172,43 @@ contract VIOS is ERC20, ERC20Detailed {
      */
     ATN auth = ATN(); // TODO: insert multisig ATN address
 
-    struct ballot {
+    struct voter {
         uint256 credits; // credits is accumulated by delegation
-        address delegate; // the person that the voter chooses to deleg    
+        address delegate;   // the person that the voter chooses to delegate their vote to instead of voting themselves
+    }
+    // This is a type for a single proposal.
+    struct Proposal {
+        address trustee;
+        uint yay; // the number of positive votes accumulated
+        uint nay; // the number of negative votes accumulated
         bool authorized;
-        uint proposal;
     }
 
-    // This will declare a new complex data type, which we can use to represent individual voters.
-    struct voter {
-        mapping(address => ballot) public ballots;
-    }
+    // A dynamically-sized array of 'Proposal' structs.
+    Proposal[] public proposalsOption;
 
     // Declare state variable to store a 'ballotVoter' struct for every possible address.
     mapping(address => voter) public voters;
 
-    function doCreate(address voter, address nominatedTrustee) {
+    /// New poll for choosing one of the 'trustees'
+    function doPoll(address[] trustees) {
+        require(auth.isSubscribed(msg.sender) || proposalsOption.length == 0, 'VIOS: poll in progress');
+        // For every provided proposal names, a new proposal object is created and added to the array's end.
+        proposalsOption = [];
+        voters[];
+        for (uint i = 0; i < trustees.length; i++) {
+            // 'Proposal({...})' will create a temporary Proposal object 
+            // 'proposalsOption.push(...)' will append it to the end of 'proposalsOption'.
+            proposalsOption.push(Proposal({
+                trustee: trustees[i],
+                yay: 0,
+                nay: 0,
+                authorized: auth.isSubscribed(msg.sender)
+            }));
+        }
+    }
+
+    function doCreate(address voter, uint nominateeIndex) {
         // In case the argument of 'require' is evaluted to 'false',
         // it will terminate and revert all
         // state and VTHO balance changes. It is often
@@ -198,24 +219,23 @@ contract VIOS is ERC20, ERC20Detailed {
         if(auth.isSubscribed(voter)){
 
             // the auth can alternatively call doVote directly
-            voters[voter].ballots[nominatedTrustee].credits = 0;
+            voters[voter].credits = 0;
             // the Authority address is not allowed to vote
         }
         else{
-            require(voters[voter].ballots[nominatedTrustee].credits == 0, 'VIOS: ballot already exists');
-            voters[voter].ballots[nominatedTrustee].credits = balanceOf(voter);
+            require(voters[voter].credits == 0, 'VIOS: ballot already exists');
+            voters[voter].credits = balanceOf(voter);
         }
     }
 
     /// Delegate votes to the voter 'delegateAddr'.
-    function doDelegate(address delegateAddr, address nominatedTrustee, uint256 voteCount) {
+    function doDelegate(address delegateAddr, uint nominateeIndex) {
         // assigns reference
         voter storage sender = voter[msg.sender];
         // The Authority address cannot delegate
         require(!auth.isSubscribed(msg.sender), 'VIOS: Authority not allowed');
         // Self-delegation is not allowed.
         require(to != msg.sender, 'VIOS: Self-delegation not allowed');
-        require(sender.ballots[nominatedTrustee].voteCount + voteCount <= sender.ballots[nominatedTrustee].credits, 'VIOS: insufficient credits');
 
         // Forward the delegation as long as
         // 'to' is delegated too.
@@ -226,68 +246,56 @@ contract VIOS is ERC20, ERC20Detailed {
         // but in other situations, such loops might
         // cause a contract to get "stuck" completely.
         
-        for (uint count = 0; voter[delegateAddr].ballots[nominatedTrustee].delegate != address(0); count++;) {
+        for (uint count = 0; voter[delegateAddr].delegate != address(0); count++;) {
             // We found a loop in the delegation, not allowed.
             require(delegateAddr != msg.sender, 'VIOS: recursive delegation not allowed');
             require(count < DELEGATE_CHAIN_LIMIT, 'VIOS: delegate chain limit reached');
             
-            delegateAddr = voter[delegateAddr].ballots[nominatedTrustee].delegate;
+            delegateAddr = voter[delegateAddr].delegate;
         }
 
-        // Since 'sender' is a reference, this will modify 'sender.ballot[nominatedTrustee].voteSpent'
-        sender.ballots[nominatedTrustee].voteSpent = true;
-        sender.ballots[nominatedTrustee].delegate = delegateAddr;
+        // Since 'sender' is a reference, this will modify 'sender.ballot[nominatedTrustee].credits'
+        sender.delegate = delegateAddr;
         voter storage delegate = voter[delegateAddr];
-        delegate.ballots[nominatedTrustee].credits += sender.credits;
+        delegate.credits += sender.credits;
     }
 
     /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
-    function doVote(uint nominatedTrustee, unit proposal, uint256 voteCount) {
+    function doVote(uint nominateeIndex, bool yay) {
         // If 'voter' or 'nominatedTrustee' are out of the range of the array,
         // this will throw automatically and revert all
         // changes.
         voter storage sender = voter[msg.sender];
         if(auth.isSubscribed(msg.sender)){
-            sender.ballots[nominatedTrustee].authorized = true;
-            sender.ballots[nominatedTrustee].proposal = proposal;
+            sender.authorized = yay;
         }
         else {
-            require(sender.ballots[nominatedTrustee].voteCount + voteCount <= sender.ballots[nominatedTrustee].credits, 'VIOS: insufficient credits');
-            sender.ballots[nominatedTrustee].voteCount += voteCount;
-            sender.ballots[nominatedTrustee].proposal = proposal;
+            require(voteCount <= sender.credits, 'VIOS: insufficient credits');
+            if(yay) proposalsOption[nominateeIndex].yay += sender.delegateWeight;
+            else proposalsOption[nominateeIndex].nay += sender.delegateWeight;
         }
     }
 
     /// @dev Attempts to assign the trustee
-    function doExecute(address nominatedTrustee, uint proposal) constant
+    function doExecute(uint nominateeIndex, bool yay) constant
             returns (bool)
     {
+        require(proposalsOption[nominateeIndex].authorized, 'VIOS: denied by Authority');
         uint tally = 0;
-        bool authorized;
-        for (uint idx = 0; idx < voter.length; idx++) {
-            if(voters[idx].ballots[nominatedTrustee].proposal != proposal) continue;
-            tally += voters[idx].ballots[nominatedTrustee].voteCount;
-            if(voter[idx].ballots[nominatedTrustee].authorized) authorized = true;
-        }
-        require(authorized, 'VIOS: denied by Authority');
-        if(proposal == VOTE_PROPOSAL_ADD_TRUSTEE && tally > div (totalSupply(), ELECTORATE_DIVISOR) ){
-            trustees.add(nominatedTrustee);
-            return true;
-        }
-        if(proposal == VOTE_PROPOSAL_REMOVE_TRUSTEE && tally > div (totalSupply(), ELECTORATE_DIVISOR) ){
-            trustees.remove(nominatedTrustee);
+        if(yay) tally = proposalsOption[nominateeIndex].yay;
+        else tally = proposalsOption[nominateeIndex].nay;
+        if(tally > div (totalSupply(), ELECTORATE_DIVISOR) ){
+            if(yay){
+                trustees.add(nominatedTrustee);
+            }
+            else {
+                trustees.remove(nominatedTrustee);                
+            }
+            proposalsOption = [];
+            voters[];
             return true;
         }
         // TODO: place penalty here
         return false;
     }
-
-    function doBurn(address nominatedTrustee) constant returns (bool){
-        require(auth.isSubscribed(msg.sender), 'VIOS: must be Authority');
-        for (uint idx = 0; idx < voter.length; idx++) {
-            delete voter[idx].ballots[nominatedTrustee];
-        }
-        return true;
-    }
-
 }
