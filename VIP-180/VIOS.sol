@@ -44,19 +44,18 @@ contract VIOS is ERC20, ERC20Detailed {
         _mint(msg.sender, INITIAL_SUPPLY);
     }
 
-	function isVIOSNetworkToken() public pure returns (bool) {
-		return true;
-	}    
-
-	function name() public view returns(string){
-		return name;
-	}
-	function symbol() public view returns(string){
-		return symbol;
-	}
-	function decimals() public view returns(uint8){
-		return decimal;
-	}
+    function isVIOSNetworkToken() public pure returns (bool) {
+        return true;
+    }
+    function name() public view returns(string){
+        return name;
+    }
+    function symbol() public view returns(string){
+        return symbol;
+    }
+    function decimals() public view returns(uint8){
+        return decimal;
+    }
 
     /**
      * @return the cap for the token minting.
@@ -74,17 +73,17 @@ contract VIOS is ERC20, ERC20Detailed {
     function claimTokens(address to, uint256 value) public onlyMinter returns (bool) {
         require(totalSupply().add(value) <= _cap, "VIOS: cap exceeded");
         require(delegates.has(msg.sender), "VIOS: does not have delegate role");
-		uint256 current_block_number = getCurrentBlockNumber();
-		uint256 balance = TOKENS_PER_BLOCK * (getCurrentBlockNumber() - last_claim_block_number);
-		last_claim_block_number = current_block_number;
-		require(value > balance, "VIOS: claim exceeds balance");
+        uint256 current_block_number = getCurrentBlockNumber();
+        uint256 balance = TOKENS_PER_BLOCK * (getCurrentBlockNumber() - last_claim_block_number);
+        last_claim_block_number = current_block_number;
+        require(value > balance, "VIOS: claim exceeds balance");
         _mint(to, value);
         return true;
     }
 
-	function getCurrentBlockNumber() internal returns (uint256){
-		return 0;
-	}
+    function getCurrentBlockNumber() internal returns (uint256){
+        return 0;
+    }
 
     /**
     * @dev Total number of tokens in existence
