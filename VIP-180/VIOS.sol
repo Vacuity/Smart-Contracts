@@ -174,7 +174,6 @@ contract VIOS is ERC20, ERC20Detailed {
 
     struct ballot {
         uint256 credits; // credits is accumulated by delegation
-        uint256 voteSpent;  // amount of credits spent
         address delegate; // the person that the voter chooses to deleg    
         bool authorized;
         uint proposal;
@@ -226,12 +225,13 @@ contract VIOS is ERC20, ERC20Detailed {
         // In that scenario, no delegation is made
         // but in other situations, such loops might
         // cause a contract to get "stuck" completely.
-        uint count = 0;
-        for (; voter[delegateAddr].ballots[nominatedTrustee].delegate != address(0); delegateAddr = voter[delegateAddr].ballots[nominatedTrustee].delegate;) {
+        
+        for (uint count = 0; voter[delegateAddr].ballots[nominatedTrustee].delegate != address(0); count++;) {
             // We found a loop in the delegation, not allowed.
             require(delegateAddr != msg.sender, 'VIOS: recursive delegation not allowed');
             require(count < DELEGATE_CHAIN_LIMIT, 'VIOS: delegate chain limit reached');
-            count++;
+            
+            delegateAddr = voter[delegateAddr].ballots[nominatedTrustee].delegate;
         }
 
         // Since 'sender' is a reference, this will modify 'sender.ballot[nominatedTrustee].voteSpent'
