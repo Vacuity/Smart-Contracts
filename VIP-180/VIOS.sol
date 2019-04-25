@@ -18,7 +18,8 @@ contract VIOS is ERC20, ERC20Detailed {
     uint8 public constant DECIMALS = 18;
     uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(DECIMALS));
     uint256 public constant MAX_SUPPLY = 500000090 * (10 ** uint256(DECIMALS));
-    unit256 public constant TOKENS_PER_BLOCK = 38059 * (10 ** uint256(DECIMALS - 4));
+    uint256 public constant TOKENS_PER_BLOCK = 38059 * (10 ** uint256(DECIMALS - 4));
+    uint256 public constant ELECTORATE_DIVISOR = 2;
 
     string public name = "VIOS Network Token";
     string public symbol = "VIOS";
@@ -200,7 +201,7 @@ contract VIOS is ERC20, ERC20Detailed {
         }
     }
 
-    /// Delegate your vote to the voter 'to'.
+    /// Delegate votes to the voter 'delegateAddr'.
     function doDelegate(address delegateAddr, address nominatedTrustee, uint256 voteCount) {
         // assigns reference
         voter storage sender = voter[msg.sender];
@@ -256,7 +257,7 @@ contract VIOS is ERC20, ERC20Detailed {
             if(voter[idx].ballots[nominatedTrustee].authorized) authorized = true;
         }
         require(authorized, 'VIOS: denied by Authority');
-        if(tally > div (totalSupply(), uint256(2)) ){
+        if(tally > div (totalSupply(), ELECTORATE_DIVISOR) ){
             trustees.add(nominatedTrustee);
             return true;
         }
