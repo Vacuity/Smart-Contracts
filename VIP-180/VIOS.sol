@@ -231,7 +231,7 @@ contract VIOS is ERC20, ERC20Detailed {
             require(to != msg.sender);
         }
 
-        // Since 'sender' is a reference, this will modify 'ballotVoters[msg.sender].voteSpent'
+        // Since 'sender' is a reference, this will modify 'sender.ballot[nominatedTrustee].voteSpent'
         sender.ballot[nominatedTrustee].voteSpent = true;
         sender.ballot[nominatedTrustee].delegateTo = to;
         voter storage delegateTo = voter[to];
@@ -263,7 +263,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// @dev Attempts to assign the trustee
-    function assignTrustees(address nominatedTrustee) constant
+    function assignTrustee(address nominatedTrustee) constant
             returns (bool)
     {
         uint count = 0;
