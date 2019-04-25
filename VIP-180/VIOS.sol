@@ -3,6 +3,7 @@ pragma solidity ^0.5.2;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/access/Roles.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 /**
@@ -166,5 +167,114 @@ contract VIOS is ERC20, ERC20Detailed {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
+
+    // ********* ANDREW logic ***********//
+
+    struct ballot {
+        uint delegateWeight; // delegateWeight is accumulated by delegation
+        uint voteSpent;  // amount of delegateWeight spent
+        address delegateTo; // the person that the voter chooses to deleg    
+        address nominatedTrustee; // the trustee being nominated
+        bool isVeto;
+    }
+        
+    ATN auth = ATN(); // TODO: insert multisig ATN address
+
+    // This will declare a new complex data type, which we can use to represent individual voters.
+    struct voter {
+        mapping(address => ballot) public ballots;
+    }
+
+    // Declare state variable to store a 'ballotVoter' struct for every possible address.
+    mapping(address => voter) public voters;
+
+    function createBallot(address voter, address nominatedTrustee) {
+        // In case the argument of 'require' is evaluted to 'false',
+        // it will terminate and revert all
+        // state and VTHO balance changes. It is often
+        // a good idea to use this in case the functions are
+        // not called correctly. Keep in mind, however, that this
+        // will currently also consume all of the provided gas
+        // (this is planned to change in the future).
+        if(auth.isSubscribed(voter)){
+            voters[voter].ballots[nominatedTrustee].delegateWeight = 0;
+            // the Authority address is not allowed to vote
+        }
+        else{
+            require(!voters[voter].ballots[nominatedTrustee].voteSpent && (voters[voter].ballots[nominatedTrustee].delegateWeight == 0));
+            voters[voter].ballots[nominatedTrustee].delegateWeight = balanceOf(voter);
+        }
+    }
+
+    /// Delegate your vote to the voter 'to'.
+    function delegateTo(address to, address nominatedTrustee) {
+        // assigns reference
+        voter storage sender = voter[msg.sender];
+        // The Authority address cannot delegate
+        require(!auth.isSubscribed(msg.sender));
+        // Self-delegation is not allowed.
+        require(to != msg.sender);
+        require(!sender.ballot[nominatedTrustee].voteSpent);
+
+        // Forward the delegation as long as
+        // 'to' is delegated too.
+        // In general, such loops can be very dangerous,
+        // since if they run for too long, they might
+        // need more gas than available inside a block.
+        // In that scenario, no delegation is made
+        // but in other situations, such loops might
+        // cause a contract to get "stuck" completely.
+        while (voter[to].ballot[nominatedTrustee].delegateTo != address(0)) {
+            to = voter[to].ballot[nominatedTrustee].delegateTo;
+
+            // We found a loop in the delegation, not allowed.
+            require(to != msg.sender);
+        }
+
+        // Since 'sender' is a reference, this will modify 'ballotVoters[msg.sender].voteSpent'
+        sender.ballot[nominatedTrustee].voteSpent = true;
+        sender.ballot[nominatedTrustee].delegateTo = to;
+        voter storage delegateTo = voter[to];
+        if (delegateTo.ballot[nominatedTrustee].voteSpent) {
+            // If the delegated person already voted, directly add to the number of votes
+            delegateTo.ballot[nominatedTrustee].voteCount += sender.delegateWeight;
+        } else {
+            // If the delegated did not vote yet,
+            // add to her delegateWeight.
+            delegateTo.ballot[nominatedTrustee].delegateWeight += sender.delegateWeight;
+        }
+    }
+
+    /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
+    function vote(uint nominatedTrustee) {
+        voter storage sender = ballotVoters[msg.sender];
+        require(!sender.voteSpent);
+        sender.voteSpent = true;
+
+        // If 'voter' or 'nominatedTrustee' are out of the range of the array,
+        // this will throw automatically and revert all
+        // changes.
+        if(auth.isSubscribed(voter)){
+            voters[voter].ballots[nominatedTrustee].isVeto = true;
+        }
+        else {
+            delegateTo.ballot[nominatedTrustee].voteCount += sender.delegateWeight;
+        }
+    }
+
+    /// @dev Attempts to assign the trustee
+    function assignTrustees(address nominatedTrustee) constant
+            returns (bool)
+    {
+        uint count = 0;
+        for (uint idx = 0; idx < ballot.length; idx++) {
+            count += voter[idx].ballots[nominatedTrustee].voteCount;
+        }
+        if(count > div (totalSupply(), uint256(2)) ){
+            trustees.add(nominatedTrustee);
+            return true;
+        }
+        return false;
+    }
 
 }
