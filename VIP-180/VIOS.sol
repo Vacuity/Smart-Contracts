@@ -173,7 +173,7 @@ contract VIOS is ERC20, ERC20Detailed {
     struct ballot {
         uint delegateWeight; // delegateWeight is accumulated by delegation
         uint voteSpent;  // amount of delegateWeight spent
-        address delegateTo; // the person that the voter chooses to deleg    
+        address delegate; // the person that the voter chooses to deleg    
         address nominatedTrustee; // the trustee being nominated
         bool isVeto;
     }
@@ -210,7 +210,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// Delegate your vote to the voter 'to'.
-    function delegateTo(address to, address nominatedTrustee) {
+    function delegate(address to, address nominatedTrustee) {
         // assigns reference
         voter storage sender = voter[msg.sender];
         // The Authority address cannot delegate
@@ -227,8 +227,8 @@ contract VIOS is ERC20, ERC20Detailed {
         // In that scenario, no delegation is made
         // but in other situations, such loops might
         // cause a contract to get "stuck" completely.
-        while (voter[to].ballot[nominatedTrustee].delegateTo != address(0)) {
-            to = voter[to].ballot[nominatedTrustee].delegateTo;
+        while (voter[to].ballot[nominatedTrustee].delegate != address(0)) {
+            to = voter[to].ballot[nominatedTrustee].delegate;
 
             // We found a loop in the delegation, not allowed.
             require(to != msg.sender);
@@ -236,15 +236,15 @@ contract VIOS is ERC20, ERC20Detailed {
 
         // Since 'sender' is a reference, this will modify 'sender.ballot[nominatedTrustee].voteSpent'
         sender.ballot[nominatedTrustee].voteSpent = true;
-        sender.ballot[nominatedTrustee].delegateTo = to;
-        voter storage delegateTo = voter[to];
-        if (delegateTo.ballot[nominatedTrustee].voteSpent) {
+        sender.ballot[nominatedTrustee].delegate = to;
+        voter storage delegate = voter[to];
+        if (delegate.ballot[nominatedTrustee].voteSpent) {
             // If the delegated person already voted, directly add to the number of votes
-            delegateTo.ballot[nominatedTrustee].voteCount += sender.delegateWeight;
+            delegate.ballot[nominatedTrustee].voteCount += sender.delegateWeight;
         } else {
             // If the delegated did not vote yet,
             // add to her delegateWeight.
-            delegateTo.ballot[nominatedTrustee].delegateWeight += sender.delegateWeight;
+            delegate.ballot[nominatedTrustee].delegateWeight += sender.delegateWeight;
         }
     }
 
@@ -261,7 +261,7 @@ contract VIOS is ERC20, ERC20Detailed {
             voters[voter].ballots[nominatedTrustee].isVeto = true;
         }
         else {
-            delegateTo.ballot[nominatedTrustee].voteCount += sender.delegateWeight;
+            delegate.ballot[nominatedTrustee].voteCount += sender.delegateWeight;
         }
     }
 
@@ -269,13 +269,12 @@ contract VIOS is ERC20, ERC20Detailed {
     function assignTrustee(address nominatedTrustee) constant
             returns (bool)
     {
-        uint count = 0;
-        uint veto = false;
+        uint tally = 0;
         for (uint idx = 0; idx < voter.length; idx++) {
-            count += voter[idx].ballots[nominatedTrustee].voteCount;
-            if(voter[idx].ballots[nominatedTrustee]) veto = true;
+            require(!voter[idx].ballots[nominatedTrustee], 'VIOS: Blocked by Authority');
+            tally += voter[idx].ballots[nominatedTrustee].voteCount;
         }
-        if(!veto && count > div (totalSupply(), uint256(2)) ){
+        if(tally > div (totalSupply(), uint256(2)) ){
             trustees.add(nominatedTrustee);
             return true;
         }
