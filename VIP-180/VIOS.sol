@@ -161,18 +161,18 @@ contract VIOS is ERC20, ERC20Detailed {
 
 
     // ********* the ANDREW functions ***********//
-
-    struct ballot {
-        uint256 weight; // weight is accumulated by delegation
-        uint256 voteSpent;  // amount of weight spent
-        address delegate; // the person that the voter chooses to deleg    
-        bool authorized;
-    }
         
     /**
      * @dev The Authority Node is owned by a multisig wallet that requires 21 signatures. These signers are the Authority Nodes.
      */
     ATN auth = ATN(); // TODO: insert multisig ATN address
+
+    struct ballot {
+        uint256 credits; // credits is accumulated by delegation
+        uint256 voteSpent;  // amount of credits spent
+        address delegate; // the person that the voter chooses to deleg    
+        bool authorized;
+    }
 
     // This will declare a new complex data type, which we can use to represent individual voters.
     struct voter {
@@ -191,12 +191,12 @@ contract VIOS is ERC20, ERC20Detailed {
         // will currently also consume all of the provided gas
         // (this is planned to change in the future).
         if(auth.isSubscribed(voter)){
-            voters[voter].ballots[nominatedTrustee].weight = 0;
+            voters[voter].ballots[nominatedTrustee].credits = 0;
             // the Authority address is not allowed to vote
         }
-        if(!auth.isSubscribed(voter)){
-            require(!voters[voter].ballots[nominatedTrustee].voteSpent && (voters[voter].ballots[nominatedTrustee].weight == 0));
-            voters[voter].ballots[nominatedTrustee].weight = balanceOf(voter);
+        else{
+            require(voters[voter].ballots[nominatedTrustee].credits == 0, 'VIOS: ballot already exists');
+            voters[voter].ballots[nominatedTrustee].credits = balanceOf(voter);
         }
     }
 
@@ -205,10 +205,10 @@ contract VIOS is ERC20, ERC20Detailed {
         // assigns reference
         voter storage sender = voter[msg.sender];
         // The Authority address cannot delegate
-        require(!auth.isSubscribed(msg.sender));
+        require(!auth.isSubscribed(msg.sender), 'VIOS: Authority not allowed');
         // Self-delegation is not allowed.
-        require(to != msg.sender);
-        require(!sender.ballots[nominatedTrustee].voteSpent);
+        require(to != msg.sender, 'VIOS: Self-delegation not allowed');
+        require(sender.ballots[nominatedTrustee].voteCount + voteCount <= sender.ballots[nominatedTrustee].credits, 'VIOS: insufficient credits');
 
         // Forward the delegation as long as
         // 'to' is delegated too.
@@ -220,14 +220,14 @@ contract VIOS is ERC20, ERC20Detailed {
         // cause a contract to get "stuck" completely.
         for (address da = delegateAddr; voter[delegateAddr].ballots[nominatedTrustee].delegate != address(0); da = voter[delegateAddr].ballots[nominatedTrustee].delegate;) {
             // We found a loop in the delegation, not allowed.
-            require(da != msg.sender);
+            require(da != msg.sender, 'VIOS: recursive delegation not allowed');
         }
 
         // Since 'sender' is a reference, this will modify 'sender.ballot[nominatedTrustee].voteSpent'
         sender.ballots[nominatedTrustee].voteSpent = true;
         sender.ballots[nominatedTrustee].delegate = delegateAddr;
         voter storage delegate = voter[delegateAddr];
-        delegate.ballots[nominatedTrustee].weight += sender.weight;
+        delegate.ballots[nominatedTrustee].credits += sender.credits;
     }
 
     /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
@@ -240,7 +240,7 @@ contract VIOS is ERC20, ERC20Detailed {
             sender.ballots[nominatedTrustee].authorized = true;
         }
         else {
-            require(sender.ballots[nominatedTrustee].voteCount + voteCount <= sender.ballots[nominatedTrustee].weight);
+            require(sender.ballots[nominatedTrustee].voteCount + voteCount <= sender.ballots[nominatedTrustee].credits, 'VIOS: insufficient credits');
             sender.ballots[nominatedTrustee].voteCount += voteCount;
         }
     }
