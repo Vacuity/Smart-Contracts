@@ -6,7 +6,7 @@ import "openzeppelin-solidity/contracts/access/Roles.sol";
 
 /**
  * @title Capped token
- * @dev Mintable token with a token cap.
+ * @dev Enforces a token cap.
  */
 contract ERC20Capped {
     uint256 private _cap;
