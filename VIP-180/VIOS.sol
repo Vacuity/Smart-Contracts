@@ -19,7 +19,6 @@ contract VIOS is ERC20, ERC20Detailed {
     uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(DECIMALS));
     uint256 public constant MAX_SUPPLY = 500000090 * (10 ** uint256(DECIMALS));
     uint256 public constant TOKENS_PER_BLOCK = 38059 * (10 ** uint256(DECIMALS - 4));
-    uint256 public constant ELECTORATE_DIVISOR = 2;
 
     string public name = "VIOS Network Token";
     string public symbol = "VIOS";
@@ -166,6 +165,7 @@ contract VIOS is ERC20, ERC20Detailed {
     uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 0;
     uint public constant VOTE_PROPOSAL_REMOVE_TRUSTEE = 1;
     uint public constant DELEGATE_CHAIN_LIMIT = 10;
+    uint256 public constant ELECTORATE_DIVISOR = 2;
        
     /**
      * @dev The Authority Node is owned by a multisig wallet that requires 21 signatures. These signers are the Authority Nodes.
@@ -178,7 +178,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
     // This is a type for a single proposal.
     struct Proposal {
-        address trustee;
+        address trusteeNominee;
         uint yay; // the number of positive votes accumulated
         uint nay; // the number of negative votes accumulated
         uint authorizedYay;
@@ -192,17 +192,17 @@ contract VIOS is ERC20, ERC20Detailed {
     // Declare state variable to store a 'ballotVoter' struct for every possible address.
     mapping(address => voter) public voters;
 
-    /// New poll for choosing one of the 'trustees'
-    function doPoll(address[] trustees) {
+    /// New poll for choosing one of the 'trustees' nominees
+    function doPoll(address[] trusteeNominees) {
         require(auth.isSubscribed(msg.sender) || proposalsOption.length == 0, 'ANDREW: poll in progress');
-        // For every provided proposal names, a new proposal object is created and added to the array's end.
+        // For every provided trustee, a new proposal object is created and added to the array's end.
         delete proposalsOption;
         delete voters;
-        for (uint i = 0; i < trustees.length; i++) {
+        for (uint i = 0; i < trusteeNominees.length; i++) {
             // 'Proposal({...})' will create a temporary Proposal object 
             // 'proposalsOption.push(...)' will append it to the end of 'proposalsOption'.
             proposalsOption.push(Proposal({
-                trustee: trustees[i],
+                trusteeNominee: trusteeNominees[i],
                 yay: 0,
                 nay: 0,
                 authorizedYay: 0,
@@ -306,6 +306,7 @@ contract VIOS is ERC20, ERC20Detailed {
         if(yay) tally = proposalsOption[nominateeIndex].authorizedYay;
         else tally = proposalsOption[nominateeIndex].authorizedNay;
         if(tally > div (totalSupply(), ELECTORATE_DIVISOR) ){
+            address trusteeNominee = proposalsOption[nominateeIndex].trusteeNominee;
             if(yay){
                 trustees.add(nominatedTrustee);
             }
