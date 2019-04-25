@@ -162,7 +162,10 @@ contract VIOS is ERC20, ERC20Detailed {
 
 
     // ********* the ANDREW functions ***********//
-        
+    uint256 public constant ELECTORATE_DIVISOR = 2;
+    uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 0;
+    uint public constant VOTE_PROPOSAL_REMOVE_TRUSTEE = 1;
+       
     /**
      * @dev The Authority Node is owned by a multisig wallet that requires 21 signatures. These signers are the Authority Nodes.
      */
@@ -173,6 +176,7 @@ contract VIOS is ERC20, ERC20Detailed {
         uint256 voteSpent;  // amount of credits spent
         address delegate; // the person that the voter chooses to deleg    
         bool authorized;
+        uint proposal;
     }
 
     // This will declare a new complex data type, which we can use to represent individual voters.
@@ -192,6 +196,8 @@ contract VIOS is ERC20, ERC20Detailed {
         // will currently also consume all of the provided gas
         // (this is planned to change in the future).
         if(auth.isSubscribed(voter)){
+
+            // the auth can alternatively call doVote directly
             voters[voter].ballots[nominatedTrustee].credits = 0;
             // the Authority address is not allowed to vote
         }
@@ -232,33 +238,40 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
-    function doVote(uint nominatedTrustee, uint256 voteCount) {
+    function doVote(uint nominatedTrustee, unit proposal, uint256 voteCount) {
         // If 'voter' or 'nominatedTrustee' are out of the range of the array,
         // this will throw automatically and revert all
         // changes.
         voter storage sender = voter[msg.sender];
         if(auth.isSubscribed(msg.sender)){
             sender.ballots[nominatedTrustee].authorized = true;
+            sender.ballots[nominatedTrustee].proposal = proposal;
         }
         else {
             require(sender.ballots[nominatedTrustee].voteCount + voteCount <= sender.ballots[nominatedTrustee].credits, 'VIOS: insufficient credits');
             sender.ballots[nominatedTrustee].voteCount += voteCount;
+            sender.ballots[nominatedTrustee].proposal = proposal;
         }
     }
 
     /// @dev Attempts to assign the trustee
-    function doAssign(address nominatedTrustee) constant
+    function doExecute(address nominatedTrustee, uint proposal) constant
             returns (bool)
     {
         uint tally = 0;
         bool authorized;
         for (uint idx = 0; idx < voter.length; idx++) {
+            if(voter[idx].ballots[nominatedTrustee].proposal != proposal) continue;
             tally += voter[idx].ballots[nominatedTrustee].voteCount;
             if(voter[idx].ballots[nominatedTrustee].authorized) authorized = true;
         }
         require(authorized, 'VIOS: denied by Authority');
-        if(tally > div (totalSupply(), ELECTORATE_DIVISOR) ){
+        if(proposal == VOTE_PROPOSAL_ADD_TRUSTEE && tally > div (totalSupply(), ELECTORATE_DIVISOR) ){
             trustees.add(nominatedTrustee);
+            return true;
+        }
+        if(proposal == VOTE_PROPOSAL_REMOVE_TRUSTEE && tally > div (totalSupply(), ELECTORATE_DIVISOR) ){
+            trustees.remove(nominatedTrustee);
             return true;
         }
         return false;
@@ -269,6 +282,7 @@ contract VIOS is ERC20, ERC20Detailed {
         for (uint idx = 0; idx < voter.length; idx++) {
             delete voter[idx].ballots[nominatedTrustee];
         }
+        return true;
     }
 
 }
