@@ -23,7 +23,7 @@ contract IDN is ERC721Full, ERC721Mintable, ERC721Burnable, ERC721Enumerable, Ow
         admins.addMany(_admins);
     }
 
-    function createIDN(
+    function create(
         address owner,
         string uri,
         string tokenUri
