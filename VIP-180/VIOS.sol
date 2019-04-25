@@ -65,6 +65,14 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /**
+     * @dev Function to disable minting
+     * @param account The account that will receive the created tokens.
+     * @param value The amount that will be created.
+     */
+    function _mint(address account, uint256 value) internal {
+    }
+
+    /**
      * @dev Function to claim token balance
      * @param to The address that will receive the minted tokens.
      * @param value The amount of tokens to mint.
