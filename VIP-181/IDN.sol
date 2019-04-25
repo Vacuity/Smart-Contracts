@@ -43,7 +43,7 @@ contract IDN is ERC721Full, ERC721Mintable, ERC721Burnable, ERC721Enumerable, Ow
         public
         returns (bool)
     {
-        require(admins.has(msg.sender), "IDN: Does not have admin role");
+        require(admins.has(msg.sender), "IDN: does not have admin role");
         uint256 id = uint256(keccak256(abi.encodePacked(uri)));
         _mint(owner, id);
         _setTokenURI(id, tokenUri);

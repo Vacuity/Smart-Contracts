@@ -4,36 +4,12 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/access/Roles.sol";
 
-/**
- * @title Capped token
- * @dev Enforces a token cap.
- */
-contract ERC20Capped {
-    uint256 private _cap;
-
-    constructor (uint256 cap) public {
-        require(cap > 0, "ERC20Capped: cap is 0");
-        _cap = cap;
-    }
-
-    /**
-     * @return the cap for the token minting.
-     */
-    function cap() public view returns (uint256) {
-        return _cap;
-    }
-
-    function _mint(address account, uint256 value) internal {
-        require(totalSupply().add(value) <= _cap, "ERC20Capped: cap exceeded");
-        super._mint(account, value);
-    }
-}
 
 /**
  * @title VIOS Network Token
  * @dev 
  */
-contract VIOS is ERC20, ERC20Detailed, ERC20Capped {
+contract VIOS is ERC20, ERC20Detailed {
     using Roles for Roles.Role;
     Roles.Role private delegates;
 
@@ -47,6 +23,7 @@ contract VIOS is ERC20, ERC20Detailed, ERC20Capped {
     string public symbol = "VIOS";
     uint8 public decimals = DECIMALS;
     uint8 public last_claim_block_number = 0;
+    uint256 private _cap;
 
 
     mapping(address => uint256) balances;
@@ -82,13 +59,21 @@ contract VIOS is ERC20, ERC20Detailed, ERC20Capped {
 	}
 
     /**
+     * @return the cap for the token minting.
+     */
+    function cap() public view returns (uint256) {
+        return _cap;
+    }
+
+    /**
      * @dev Function to claim token balance
      * @param to The address that will receive the minted tokens.
      * @param value The amount of tokens to mint.
      * @return A boolean that indicates if the operation was successful.
      */
     function claimTokens(address to, uint256 value) public onlyMinter returns (bool) {
-        require(delegates.has(msg.sender), "VIOS: Does not have delegate role");
+        require(totalSupply().add(value) <= _cap, "VIOS: cap exceeded");
+        require(delegates.has(msg.sender), "VIOS: does not have delegate role");
 		uint256 current_block_number = getCurrentBlockNumber();
 		uint256 balance = TOKENS_PER_BLOCK * (getCurrentBlockNumber() - last_claim_block_number);
 		last_claim_block_number = current_block_number;
