@@ -181,6 +181,8 @@ contract VIOS is ERC20, ERC20Detailed {
         address trustee;
         uint yay; // the number of positive votes accumulated
         uint nay; // the number of negative votes accumulated
+        uint authorizedYay;
+        uint authorizedNay;
         bool authorized;
     }
 
@@ -192,7 +194,7 @@ contract VIOS is ERC20, ERC20Detailed {
 
     /// New poll for choosing one of the 'trustees'
     function doPoll(address[] trustees) {
-        require(auth.isSubscribed(msg.sender) || proposalsOption.length == 0, 'VIOS: poll in progress');
+        require(auth.isSubscribed(msg.sender) || proposalsOption.length == 0, 'ANDREW: poll in progress');
         // For every provided proposal names, a new proposal object is created and added to the array's end.
         delete proposalsOption;
         delete voters;
@@ -203,6 +205,8 @@ contract VIOS is ERC20, ERC20Detailed {
                 trustee: trustees[i],
                 yay: 0,
                 nay: 0,
+                authorizedYay: 0,
+                authorizedNay: 0,
                 authorized: auth.isSubscribed(msg.sender)
             }));
         }
@@ -223,7 +227,7 @@ contract VIOS is ERC20, ERC20Detailed {
             // the Authority address is not allowed to vote
         }
         else{
-            require(voters[voter].credits == 0, 'VIOS: ballot already exists');
+            require(voters[voter].credits == 0, 'ANDREW: ballot already exists');
             voters[voter].credits = balanceOf(voter);
         }
     }
@@ -233,11 +237,11 @@ contract VIOS is ERC20, ERC20Detailed {
         // assigns reference
         voter storage sender = voter[msg.sender];
         // The Authority address cannot delegate
-        require(!auth.isSubscribed(msg.sender), 'VIOS: Authority not allowed');
+        require(!auth.isSubscribed(msg.sender), 'ANDREW: Authority not allowed');
         // Self-delegation is not allowed.
-        require(to != msg.sender, 'VIOS: Self-delegation not allowed');
-        require (sender.credits > -1, 'VIOS: no credits');
-        require (sender.credits > 0, 'VIOS: no ballot');
+        require(to != msg.sender, 'ANDREW: Self-delegation not allowed');
+        require (sender.credits > -1, 'ANDREW: no credits');
+        require (sender.credits > 0, 'ANDREW: no ballot');
 
         // Forward the delegation as long as
         // 'to' is delegated too.
@@ -250,8 +254,8 @@ contract VIOS is ERC20, ERC20Detailed {
         
         for (uint count = 0; voter[delegateAddr].delegate != address(0); count++;) {
             // We found a loop in the delegation, not allowed.
-            require(delegateAddr != msg.sender, 'VIOS: recursive delegation not allowed');
-            require(count < DELEGATE_CHAIN_LIMIT, 'VIOS: delegate chain limit reached');
+            require(delegateAddr != msg.sender, 'ANDREW: recursive delegation not allowed');
+            require(count < DELEGATE_CHAIN_LIMIT, 'ANDREW: delegate chain limit reached');
             
             delegateAddr = voter[delegateAddr].delegate;
         }
@@ -264,9 +268,18 @@ contract VIOS is ERC20, ERC20Detailed {
         sender.credits = -2;
     }
 
-    function doAuthorize(uint nominateeIndex, bool authorized){
-        require(auth.isSubscribed(msg.sender), 'VIOS: is not Authority');
-        proposalsOption[nominateeIndex].authorized = authorized;
+    function doAuthorize(uint nominateeIndex, uint yayOrNay){
+        require(auth.isSubscribed(msg.sender), 'ANDREW: is not Authority');
+        if(yayOrNay == 1) proposalsOption[nominateeIndex].authorizedYay = proposalsOption[nominateeIndex].yay;
+        else if(yayOrNay == 0) proposalsOption[nominateeIndex].authorizedNay = proposalsOption[nominateeIndex].nay;
+        proposalsOption[nominateeIndex].authorized = true;
+    }
+
+    function doRevokeAuthorize(uint nominateeIndex){
+        require(auth.isSubscribed(msg.sender), 'ANDREW: is not Authority');
+        proposalsOption[nominateeIndex].authorized = false;
+        proposalsOption[nominateeIndex].authorizedYay = 0;
+        proposalsOption[nominateeIndex].authorizedNay = 0;
     }
 
     /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
@@ -276,9 +289,9 @@ contract VIOS is ERC20, ERC20Detailed {
         // changes.
         
         voter storage sender = voter[msg.sender];
-        require (sender.credits != -2, 'VIOS: credits delegated');
-        require (sender.credits != -1, 'VIOS: vote already cast');
-        require (sender.credits != 0, 'VIOS: no ballot');
+        require (sender.credits != -2, 'ANDREW: credits delegated');
+        require (sender.credits != -1, 'ANDREW: vote already cast');
+        require (sender.credits != 0, 'ANDREW: no ballot');
         if(yay) proposalsOption[nominateeIndex].yay += sender.delegateWeight;
         else proposalsOption[nominateeIndex].nay += sender.delegateWeight;
         sender.credits = -1;
@@ -288,10 +301,10 @@ contract VIOS is ERC20, ERC20Detailed {
     function doExecute(uint nominateeIndex, bool yay) constant
             returns (bool)
     {
-        require(proposalsOption[nominateeIndex].authorized, 'VIOS: denied by Authority');
+        require(proposalsOption[nominateeIndex].authorized, 'ANDREW: denied by Authority');
         uint tally = 0;
-        if(yay) tally = proposalsOption[nominateeIndex].yay;
-        else tally = proposalsOption[nominateeIndex].nay;
+        if(yay) tally = proposalsOption[nominateeIndex].authorizedYay;
+        else tally = proposalsOption[nominateeIndex].authorizedNay;
         if(tally > div (totalSupply(), ELECTORATE_DIVISOR) ){
             if(yay){
                 trustees.add(nominatedTrustee);
