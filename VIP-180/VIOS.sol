@@ -270,10 +270,12 @@ contract VIOS is ERC20, ERC20Detailed {
             returns (bool)
     {
         uint count = 0;
+        uint veto = false;
         for (uint idx = 0; idx < ballot.length; idx++) {
             count += voter[idx].ballots[nominatedTrustee].voteCount;
+            if(voter[idx].ballots[nominatedTrustee]) veto = true;
         }
-        if(count > div (totalSupply(), uint256(2)) ){
+        if(!veto && count > div (totalSupply(), uint256(2)) ){
             trustees.add(nominatedTrustee);
             return true;
         }
