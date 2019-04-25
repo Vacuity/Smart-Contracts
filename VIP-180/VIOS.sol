@@ -11,7 +11,7 @@ import "openzeppelin-solidity/contracts/access/Roles.sol";
  */
 contract VIOS is ERC20, ERC20Detailed {
     using Roles for Roles.Role;
-    Roles.Role private delegates;
+    Roles.Role private trustees;
 
 
     uint8 public constant DECIMALS = 18;
@@ -79,7 +79,7 @@ contract VIOS is ERC20, ERC20Detailed {
      * @return A boolean that indicates if the operation was successful.
      */
     function claimTokens(address to, uint256 value) public onlyMinter returns (bool) {
-        require(delegates.has(msg.sender), "VIOS: does not have delegate role");
+        require(trustees.has(msg.sender), "VIOS: does not have trustee role");
         require(totalSupply().add(value) <= _cap, "VIOS: cap exceeded");
         require(value <= balance, "VIOS: claim exceeds balance");
         uint256 current_block_number = 0;
