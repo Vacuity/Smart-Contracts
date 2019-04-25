@@ -178,6 +178,9 @@ contract VIOS is ERC20, ERC20Detailed {
         bool isVeto;
     }
         
+    /**
+     * @dev The Authority Node is owned by a multisig wallet that requires 21 signatures. These signers are the Authority Nodes.
+     */
     ATN auth = ATN(); // TODO: insert multisig ATN address
 
     // This will declare a new complex data type, which we can use to represent individual voters.
