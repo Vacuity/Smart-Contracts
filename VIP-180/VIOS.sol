@@ -88,7 +88,7 @@ contract VIOS is ERC20, ERC20Detailed {
     /**
     * @dev Total number of tokens in existence
     */
-	function totalSupply() public view returns(uint256){
+    function totalSupply() public view returns(uint256){
         return totalSupply_;
     }
     /**
@@ -96,7 +96,7 @@ contract VIOS is ERC20, ERC20Detailed {
     * @param _owner The address to query the the balance of.
     * @return An uint256 representing the amount owned by the passed address.
     */
-	function balanceOf(address _owner) public view returns(uint256){
+    function balanceOf(address _owner) public view returns(uint256){
         return balances[_owner];
     }
     /**
@@ -104,7 +104,7 @@ contract VIOS is ERC20, ERC20Detailed {
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
     */
-	function transfer(address _to, uint256 _value) public returns (bool){
+    function transfer(address _to, uint256 _value) public returns (bool){
         require(_to != address(0));
         require(_value <= balances[msg.sender]);
 
@@ -119,7 +119,7 @@ contract VIOS is ERC20, ERC20Detailed {
      * @param _to address The address which you want to transfer to
      * @param _value uint256 the amount of tokens to be transferred
      */
-	function transferFrom(address _from, address _to, uint256 _value) public returns(bool){
+    function transferFrom(address _from, address _to, uint256 _value) public returns(bool){
         require(_to != address(0));
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
@@ -139,7 +139,7 @@ contract VIOS is ERC20, ERC20Detailed {
      * @param _spender The address which will spend the funds.
      * @param _value The amount of tokens to be spent.
      */
-	function approve(address _spender, uint256 _value) public returns(bool){
+    function approve(address _spender, uint256 _value) public returns(bool){
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
@@ -155,8 +155,8 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
 
-	event Transfer(address indexed _from, address indexed _to, uint256 _value);
-	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
 
 }
