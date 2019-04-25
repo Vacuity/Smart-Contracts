@@ -193,7 +193,7 @@ contract VIOS is ERC20, ERC20Detailed {
     mapping(address => voter) public voters;
 
     /// New poll for choosing one of the 'trustees' nominees
-    function doPoll(address[] trusteeNominees) {
+    function create(address[] trusteeNominees) {
         require(auth.isSubscribed(msg.sender) || proposalsOption.length == 0, 'ANDREW: poll in progress');
         // For every provided trustee, a new proposal object is created and added to the array's end.
         delete proposalsOption;
@@ -207,12 +207,18 @@ contract VIOS is ERC20, ERC20Detailed {
                 nay: 0,
                 authorizedYay: 0,
                 authorizedNay: 0,
-                authorized: auth.isSubscribed(msg.sender)
+                authorized: false
             }));
         }
     }
 
-    function doCreate(address voter, uint nominateeIndex) {
+    function close(){
+        require(auth.isSubscribed(msg.sender), 'ANDREW: denied by Authority');
+        delete proposalsOption;
+        delete voters;
+    }
+
+    function issueBallot(address voter, uint nominateeIndex) {
         // In case the argument of 'require' is evaluted to 'false',
         // it will terminate and revert all
         // state and VTHO balance changes. It is often
@@ -233,7 +239,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// Delegate votes to the voter 'delegateAddr'.
-    function doDelegate(address delegateAddr, uint nominateeIndex) {
+    function delegate(address delegateAddr, uint nominateeIndex) {
         // assigns reference
         voter storage sender = voter[msg.sender];
         // The Authority address cannot delegate
@@ -268,14 +274,14 @@ contract VIOS is ERC20, ERC20Detailed {
         sender.credits = -2;
     }
 
-    function doAuthorize(uint nominateeIndex, uint yayOrNay){
+    function authorize(uint nominateeIndex, uint yayOrNay){
         require(auth.isSubscribed(msg.sender), 'ANDREW: is not Authority');
         if(yayOrNay == 1) proposalsOption[nominateeIndex].authorizedYay = proposalsOption[nominateeIndex].yay;
         else if(yayOrNay == 0) proposalsOption[nominateeIndex].authorizedNay = proposalsOption[nominateeIndex].nay;
         proposalsOption[nominateeIndex].authorized = true;
     }
 
-    function doRevokeAuthorize(uint nominateeIndex){
+    function revokeAuthorize(uint nominateeIndex){
         require(auth.isSubscribed(msg.sender), 'ANDREW: is not Authority');
         proposalsOption[nominateeIndex].authorized = false;
         proposalsOption[nominateeIndex].authorizedYay = 0;
@@ -283,7 +289,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
-    function doVote(uint nominateeIndex, bool yay) {
+    function vote(uint nominateeIndex, bool yay) {
         // If 'voter' or 'nominatedTrustee' are out of the range of the array,
         // this will throw automatically and revert all
         // changes.
@@ -298,7 +304,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// @dev Attempts to assign the trustee
-    function doExecute(uint nominateeIndex, bool yay) constant
+    function execute(uint nominateeIndex, bool yay) constant
             returns (bool)
     {
         require(proposalsOption[nominateeIndex].authorized, 'ANDREW: denied by Authority');
