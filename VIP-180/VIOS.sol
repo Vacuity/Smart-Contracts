@@ -76,7 +76,7 @@ contract VIOS is ERC20, ERC20Detailed {
         uint256 current_block_number = getCurrentBlockNumber();
         uint256 balance = TOKENS_PER_BLOCK * (getCurrentBlockNumber() - last_claim_block_number);
         last_claim_block_number = current_block_number;
-        require(value > balance, "VIOS: claim exceeds balance");
+        require(value <= balance, "VIOS: claim exceeds balance");
         _mint(to, value);
         return true;
     }
