@@ -72,7 +72,7 @@ contract VIOS is ERC20, ERC20Detailed {
      * @return A boolean that indicates if the operation was successful.
      */
     function claimTokens(address to, uint256 value) public onlyMinter returns (bool) {
-        require(trustees.has(msg.sender), "VIOS: does not have trustee role");
+        require(trustees.has(msg.sender), "VIOS: sender does not have trustee role");
         require(totalSupply().add(value) <= _cap, "VIOS: cap exceeded");
         require(value <= balance, "VIOS: claim exceeds balance");
         uint256 current_block_number = 0;
@@ -193,7 +193,7 @@ contract VIOS is ERC20, ERC20Detailed {
     mapping(address => voter) public voters;
 
     function setAuth(ATN newAuth){
-        require(auth.isSubscribed(msg.sender), 'ANDREW: is not Authority');
+        require(auth.isSubscribed(msg.sender), 'ANDREW: sender is not Authority');
         require(newATN.isSubscribed(msg.sender), 'ANDREW: destination Authority not found');
         auth = newAuth;
     }
@@ -201,7 +201,7 @@ contract VIOS is ERC20, ERC20Detailed {
     uint set_auth_block_number; // the Authority has 8 hours to revert the setAuth change
     function setAuthByCommunity(uint nominateeIndex){
         // TODO: attach a high price so that this function does not get spammed
-        require(trustees.has(msg.sender), "ANDREW: does not have trustee role");
+        require(trustees.has(msg.sender), "ANDREW: sender does not have trustee role");
         require(set_auth_block_number == 0, 'ANDREW: set auth in progress');
         set_auth_block_number = current_block_number + SET_AUTH_WAIT;
     }
@@ -266,11 +266,11 @@ contract VIOS is ERC20, ERC20Detailed {
     /// Delegate votes to the voter 'delegateAddr'.
     function delegate(address delegateAddr) {
         // assigns reference
-        voter storage sender = voter[msg.sender];
         // The Authority address cannot delegate
         require(!auth.isSubscribed(msg.sender), 'ANDREW: Authority not allowed');
         // Self-delegation is not allowed.
-        require(to != msg.sender, 'ANDREW: Self-delegation not allowed');
+        require(to != msg.sender, 'ANDREW: self-delegation not allowed');
+        voter storage sender = voter[msg.sender];
         require (sender.credits > -1, 'ANDREW: no credits');
         require (sender.credits > 0, 'ANDREW: no ballot');
 
@@ -285,7 +285,7 @@ contract VIOS is ERC20, ERC20Detailed {
         
         for (uint count = 0; voter[delegateAddr].delegate != address(0); count++;) {
             // We found a loop in the delegation, not allowed.
-            require(delegateAddr != msg.sender, 'ANDREW: recursive delegation not allowed');
+            require(delegateAddr != msg.sender, 'ANDREW: indirect self-delegation not allowed');
             require(count < DELEGATE_CHAIN_LIMIT, 'ANDREW: delegate chain limit reached');
             
             delegateAddr = voter[delegateAddr].delegate;
@@ -300,14 +300,14 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     function authorize(uint nominateeIndex, uint yayOrNay){
-        require(auth.isSubscribed(msg.sender), 'ANDREW: is not Authority');
+        require(auth.isSubscribed(msg.sender), 'ANDREW: sender is not Authority');
         if(yayOrNay == 1) proposals[nominateeIndex].authorizedYay = proposals[nominateeIndex].yay;
         else if(yayOrNay == 0) proposals[nominateeIndex].authorizedNay = proposals[nominateeIndex].nay;
         proposals[nominateeIndex].authorized = true;
     }
 
     function revokeAuthorize(uint nominateeIndex){
-        require(auth.isSubscribed(msg.sender), 'ANDREW: is not Authority');
+        require(auth.isSubscribed(msg.sender), 'ANDREW: sender is not Authority');
         proposals[nominateeIndex].authorized = false;
         proposals[nominateeIndex].authorizedYay = 0;
         proposals[nominateeIndex].authorizedNay = 0;
