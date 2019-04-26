@@ -243,7 +243,7 @@ contract VIOS is ERC20, ERC20Detailed {
         delete voters;
     }
 
-    function issueBallot(address voter, uint nominateeIndex) {
+    function issueBallot(address voter) {
         // In case the argument of 'require' is evaluted to 'false',
         // it will terminate and revert all
         // state and VTHO balance changes. It is often
@@ -264,7 +264,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// Delegate votes to the voter 'delegateAddr'.
-    function delegate(address delegateAddr, uint nominateeIndex) {
+    function delegate(address delegateAddr) {
         // assigns reference
         voter storage sender = voter[msg.sender];
         // The Authority address cannot delegate
