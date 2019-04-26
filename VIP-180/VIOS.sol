@@ -344,8 +344,8 @@ contract VIOS is ERC20, ERC20Detailed {
         require (sender.status != BALLOT_STATUS_NONE, 'ANDREW: no ballot');
         require (proposals[nominateeIndex].type != type, 'ANDREW: type not found'); // requiring 'type' ensures the sender is aware of the proposal type
         require (yayOrNay < 0 || yayOrNay > 1, 'ANDREW: invalid input'); 
-        if(yayOrNay == 1) proposals[nominateeIndex].yay += sender.delegateWeight;
-        else if(yayOrNay == 0) proposals[nominateeIndex].nay += sender.delegateWeight;
+        if(yayOrNay == 1) proposals[nominateeIndex].yay += sender.credits;
+        else if(yayOrNay == 0) proposals[nominateeIndex].nay += sender.credits;
         sender.status = BALLOT_STATUS_VOTED;
     }
 
