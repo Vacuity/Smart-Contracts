@@ -12,12 +12,12 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
  */
 contract VIOS is ERC20, ERC20Detailed {
     using Roles for Roles.Role;
-    Roles.Role public trustees;
+    Roles.Role private trustees;
 
     /**
      * @dev The Authority Node is owned by a multisig wallet that requires 21 signatures. These signers are the Authority Nodes.
      */
-    ATN public auth = ATN(); // TODO: insert ATN address
+    ATN private auth = ATN(); // TODO: insert ATN address
 
     uint8 public constant DECIMALS = 18;
     uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(DECIMALS));
@@ -33,6 +33,10 @@ contract VIOS is ERC20, ERC20Detailed {
 
     mapping(address => uint256) balances;
     mapping (address => mapping (address => uint256)) internal allowed;
+
+    function getTrustees() public returns (Roles.Role){
+        return trustees;
+    }
 
     /**
     * @dev Total number of tokens in existence
