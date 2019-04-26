@@ -257,24 +257,17 @@ contract VIOS is ERC20, ERC20Detailed {
         majorityDivisor = 2;
     }
 
-    function issueBallot(address voter) {
-        // In case the argument of 'require' is evaluted to 'false',
-        // it will terminate and revert all
-        // state and VTHO balance changes. It is often
-        // a good idea to use this in case the functions are
-        // not called correctly. Keep in mind, however, that this
-        // will currently also consume all of the provided gas
-        // (this is planned to change in the future).
-        if(auth.isSubscribed(voter)){
-
+    function claimBallot() {
+        if(auth.isSubscribed(msg.sender)){
+            // the Authority address is not allowed to vote
             // the auth can alternatively call doVote directly
             voters[voter].credits = BALLOT_STATUS_NONE;
-            // the Authority address is not allowed to vote
         }
         else{
-            require(voters[voter].status == BALLOT_STATUS_NONE, 'ANDREW: ballot already exists');
-            voters[voter].credits = balanceOf(voter);
-            voters[voter].status = BALLOT_STATUS_DEFAULT;
+            voter memory sender = voter[msg.sender];
+            require(sender.status == BALLOT_STATUS_NONE, 'ANDREW: ballot already exists');
+            sender.credits = balanceOf(voter);
+            sender.status = BALLOT_STATUS_DEFAULT;
         }
     }
 
