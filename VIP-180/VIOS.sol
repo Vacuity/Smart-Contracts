@@ -166,8 +166,8 @@ contract VIOS is ERC20, ERC20Detailed {
 
 
     // ********* the ANDREW functions ***********//
-    uint public constant BALLOT_TYPE_ADD_TRUSTEE = 0;
-    uint public constant BALLOT_TYPE_REMOVE_TRUSTEE = 1;
+    uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 0;
+    uint public constant VOTE_PROPOSAL_REMOVE_TRUSTEE = 1;
     uint public constant BALLOT_STATUS_NONE = 0;
     uint public constant BALLOT_STATUS_DEFAULT = 1;
     uint public constant BALLOT_STATUS_VOTED = 2;
@@ -180,7 +180,7 @@ contract VIOS is ERC20, ERC20Detailed {
         address delegate;   // the person that the voter chooses to delegate their vote to instead of voting themselves
     }
     // This is a type for a single proposal.
-    struct Proposal {
+    struct proposal {
         address trusteeNominee;
         uint yay; // the number of positive votes accumulated
         uint nay; // the number of negative votes accumulated
@@ -192,8 +192,8 @@ contract VIOS is ERC20, ERC20Detailed {
 
     uint public majorityDivisor = 2;
 
-    // A dynamically-sized array of 'Proposal' structs.
-    Proposal[] public proposals;
+    // A dynamically-sized array of 'proposal' structs.
+    proposal[] public proposals;
 
     // Declare state variable to store a 'ballotVoter' struct for every possible address.
     mapping(address => voter) public voters;
@@ -213,10 +213,9 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     function executeByCommunity(uint nominateeIndex){
-        Proposal proposal = proposals[nominateeIndex];
-        require(trustees.has(proposal.trusteeNominee), "ANDREW: does not have trustee role");
+        require(trustees.has(proposals[nominateeIndex].trusteeNominee), "ANDREW: does not have trustee role");
         require(current_block_number >= set_auth_block_number, 'ANDREW: set auth in progress');
-        if(total >= div (totalSupply(), uint256(majorityDivisor)) && proposal.authorizedYay > proposal.authorizedNay){
+        if(total >= div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay){
             auth = ATN(proposals[nominateeIndex].trusteeNominee);
             delete proposals;
             delete voters;
@@ -236,10 +235,10 @@ contract VIOS is ERC20, ERC20Detailed {
         delete voters;
         majorityDivisor = _majorityDivisor;
         for (uint i = 0; i < trusteeNominees.length; i++) {
-            // 'Proposal({...})' will create a temporary Proposal object 
+            // 'proposal({...})' will create a temporary proposal object 
             // 'proposals.push(...)' will append it to the end of 'proposals'.
-            require(type[i] == BALLOT_TYPE_REMOVE_TRUSTEE || type[i] = BALLOT_TYPE_ADD_TRUSTEE, 'ANDREW: invalid proposal');
-            proposals.push(Proposal({
+            require(type[i] == VOTE_PROPOSAL_REMOVE_TRUSTEE || type[i] = VOTE_PROPOSAL_ADD_TRUSTEE, 'ANDREW: invalid proposal');
+            proposals.push(proposal({
                 trusteeNominee: trusteeNominees[i],
                 yay: 0,
                 nay: 0,
@@ -286,7 +285,7 @@ contract VIOS is ERC20, ERC20Detailed {
         require(!auth.isSubscribed(msg.sender), 'ANDREW: Authority not allowed');
         // Self-delegation is not allowed.
         require(to != msg.sender, 'ANDREW: self-delegation not allowed');
-        voter storage sender = voter[msg.sender];
+        voter memory sender = voter[msg.sender];
         require (sender.status != BALLOT_STATUS_DELEGATED, 'ANDREW: credits delegated');
         require (sender.status != BALLOT_STATUS_VOTED, 'ANDREW: vote already cast');
         require (sender.status != BALLOT_STATUS_NONE, 'ANDREW: no ballot');
@@ -310,7 +309,7 @@ contract VIOS is ERC20, ERC20Detailed {
 
         // Since 'sender' is a reference, this will modify 'sender.ballot[nominatedTrustee].credits'
         sender.delegate = delegateAddr;
-        voter storage delegate = voter[delegateAddr];
+        voter memory delegate = voter[delegateAddr];
         if(delegate.credits == 0) delegate.credits = 0; // allow delegate to resume voting if credits are furnished after her vote
         delegate.credits += sender.credits;
         sender.status = BALLOT_STATUS_DELEGATED;
@@ -339,7 +338,7 @@ contract VIOS is ERC20, ERC20Detailed {
         // this will throw automatically and revert all
         // changes.
         
-        voter storage sender = voter[msg.sender];
+        voter memory sender = voter[msg.sender];
         require (sender.status != BALLOT_STATUS_DELEGATED, 'ANDREW: credits delegated');
         require (sender.status != BALLOT_STATUS_VOTED, 'ANDREW: vote already cast');
         require (sender.status != BALLOT_STATUS_NONE, 'ANDREW: no ballot');
@@ -354,16 +353,15 @@ contract VIOS is ERC20, ERC20Detailed {
     function execute(uint nominateeIndex) constant
             returns (bool)
     {
-        Proposal proposal = proposals[nominateeIndex];
-        require(proposal.authorized, 'ANDREW: denied by Authority');
-        uint total = proposal.authorizedYay;
-        total += proposal.authorizedNay;
-        if(total >= div (totalSupply(), uint256(majorityDivisor)) && proposal.authorizedYay > proposal.authorizedNay){
-            if(proposal.type == BALLOT_TYPE_ADD_TRUSTEE){
+        require(proposals[nominateeIndex].authorized, 'ANDREW: denied by Authority');
+        uint total = proposals[nominateeIndex].authorizedYay;
+        total += proposals[nominateeIndex].authorizedNay;
+        if(total >= div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay){
+            if(proposals[nominateeIndex].type == VOTE_PROPOSAL_ADD_TRUSTEE){
                 trustees.add(proposal.trusteeNominee);
             }
-            else if(proposal.type == BALLOT_TYPE_REMOVE_TRUSTEE) {
-                trustees.remove(proposal.trusteeNominee);                
+            else if(proposals[nominateeIndex].type == VOTE_PROPOSAL_REMOVE_TRUSTEE) {
+                trustees.remove(proposals[nominateeIndex].trusteeNominee);                
             }
             delete proposals;
             delete voters;
