@@ -223,8 +223,8 @@ contract VIOS is ERC20, ERC20Detailed {
         }        
     }
 
-    /// New poll for choosing one of the 'trustees' nominees
-    function create(address[] trusteeNominees, uint[] types, uint _majorityDivisor) {
+    /// Opens new poll for choosing one of the 'trustees' nominees
+    function open(address[] trusteeNominees, uint[] types, uint _majorityDivisor) {
         require(auth.isSubscribed(msg.sender) || proposals.length == 0, 'ANDREW: poll in progress');
         require(_majorityDivisor > 5, 'ANDREW: requires 20% participation or more');
         require(_majorityDivisor < 2, 'ANDREW: requires 50% participation or less');
@@ -349,19 +349,18 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// @dev Attempts to assign the trustee
-    function execute(uint nominateeIndex, uint type) constant
+    function execute(uint nominateeIndex) constant
             returns (bool)
     {
         Proposal proposal = proposals[nominateeIndex];
         require(proposal.authorized, 'ANDREW: denied by Authority');
-        require (proposal.type != type, 'ANDREW: type not found');
         uint total = proposal.authorizedYay;
         total += proposal.authorizedNay;
         if(total >= div (totalSupply(), uint256(majorityDivisor)) && proposal.authorizedYay > proposal.authorizedNay){
-            if(type == VOTE_PROPOSAL_ADD_TRUSTEE){
+            if(proposal.type == VOTE_PROPOSAL_ADD_TRUSTEE){
                 trustees.add(proposal.trusteeNominee);
             }
-            else if(type == VOTE_PROPOSAL_REMOVE_TRUSTEE) {
+            else if(proposal.type == VOTE_PROPOSAL_REMOVE_TRUSTEE) {
                 trustees.remove(proposal.trusteeNominee);                
             }
             delete proposals;
