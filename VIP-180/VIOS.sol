@@ -161,16 +161,16 @@ contract VIOS is ERC20, ERC20Detailed {
 
 
     // ********* the ANDREW functions ***********//
-    uint256 public constant ELECTORATE_DIVISOR = 2;
+    uint256 public constant DIVISOR_SIMPLE_MAJORITY = 2;
     uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 0;
     uint public constant VOTE_PROPOSAL_REMOVE_TRUSTEE = 1;
     uint public constant DELEGATE_CHAIN_LIMIT = 10;
-    uint256 public constant ELECTORATE_DIVISOR = 2;
+    uint public constant  SET_AUTH_WAIT = 1000000000000;
        
     /**
      * @dev The Authority Node is owned by a multisig wallet that requires 21 signatures. These signers are the Authority Nodes.
      */
-    ATN auth = ATN(); // TODO: insert multisig ATN address
+    ATN auth = ATN(); // TODO: insert ATN address
 
     struct voter {
         uint256 credits; // credits is accumulated by delegation
@@ -187,21 +187,46 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     // A dynamically-sized array of 'Proposal' structs.
-    Proposal[] public proposalsOption;
+    Proposal[] public proposals;
 
     // Declare state variable to store a 'ballotVoter' struct for every possible address.
     mapping(address => voter) public voters;
 
+    function setAuth(ATN newAuth){
+        require(auth.isSubscribed(msg.sender), 'ANDREW: is not Authority');
+        require(newATN.isSubscribed(msg.sender), 'ANDREW: destination Authority not found');
+        auth = newAuth;
+    }
+
+    uint set_auth_block_number; // the Authority has 8 hours to revert the setAuth change
+    function setAuthByCommunity(uint nominateeIndex){
+        // TODO: attach a high price so that this function does not get spammed
+        require(trustees.has(msg.sender), "ANDREW: does not have trustee role");
+        require(set_auth_block_number == 0, 'ANDREW: set auth in progress');
+        set_auth_block_number = current_block_number + SET_AUTH_WAIT;
+    }
+
+    function executeByCommunity(uint nominateeIndex){
+        require(trustees.has(proposals[nominateeIndex].trusteeNominee), "ANDREW: does not have trustee role");
+        require(current_block_number >= set_auth_block_number, 'ANDREW: set auth in progress');
+        if(proposals[nominateeIndex].yay > div (totalSupply(), DIVISOR_SIMPLE_MAJORITY) ){
+            auth = ATN(proposals[nominateeIndex].trusteeNominee);
+            delete proposals;
+            delete voters;
+            set_auth_block_number = 0;
+        }        
+    }
+
     /// New poll for choosing one of the 'trustees' nominees
     function create(address[] trusteeNominees) {
-        require(auth.isSubscribed(msg.sender) || proposalsOption.length == 0, 'ANDREW: poll in progress');
+        require(auth.isSubscribed(msg.sender) || proposals.length == 0, 'ANDREW: poll in progress');
         // For every provided trustee, a new proposal object is created and added to the array's end.
-        delete proposalsOption;
+        delete proposals;
         delete voters;
         for (uint i = 0; i < trusteeNominees.length; i++) {
             // 'Proposal({...})' will create a temporary Proposal object 
-            // 'proposalsOption.push(...)' will append it to the end of 'proposalsOption'.
-            proposalsOption.push(Proposal({
+            // 'proposals.push(...)' will append it to the end of 'proposals'.
+            proposals.push(Proposal({
                 trusteeNominee: trusteeNominees[i],
                 yay: 0,
                 nay: 0,
@@ -214,7 +239,7 @@ contract VIOS is ERC20, ERC20Detailed {
 
     function close(){
         require(auth.isSubscribed(msg.sender), 'ANDREW: denied by Authority');
-        delete proposalsOption;
+        delete proposals;
         delete voters;
     }
 
@@ -276,16 +301,16 @@ contract VIOS is ERC20, ERC20Detailed {
 
     function authorize(uint nominateeIndex, uint yayOrNay){
         require(auth.isSubscribed(msg.sender), 'ANDREW: is not Authority');
-        if(yayOrNay == 1) proposalsOption[nominateeIndex].authorizedYay = proposalsOption[nominateeIndex].yay;
-        else if(yayOrNay == 0) proposalsOption[nominateeIndex].authorizedNay = proposalsOption[nominateeIndex].nay;
-        proposalsOption[nominateeIndex].authorized = true;
+        if(yayOrNay == 1) proposals[nominateeIndex].authorizedYay = proposals[nominateeIndex].yay;
+        else if(yayOrNay == 0) proposals[nominateeIndex].authorizedNay = proposals[nominateeIndex].nay;
+        proposals[nominateeIndex].authorized = true;
     }
 
     function revokeAuthorize(uint nominateeIndex){
         require(auth.isSubscribed(msg.sender), 'ANDREW: is not Authority');
-        proposalsOption[nominateeIndex].authorized = false;
-        proposalsOption[nominateeIndex].authorizedYay = 0;
-        proposalsOption[nominateeIndex].authorizedNay = 0;
+        proposals[nominateeIndex].authorized = false;
+        proposals[nominateeIndex].authorizedYay = 0;
+        proposals[nominateeIndex].authorizedNay = 0;
     }
 
     /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
@@ -298,8 +323,8 @@ contract VIOS is ERC20, ERC20Detailed {
         require (sender.credits != -2, 'ANDREW: credits delegated');
         require (sender.credits != -1, 'ANDREW: vote already cast');
         require (sender.credits != 0, 'ANDREW: no ballot');
-        if(yay) proposalsOption[nominateeIndex].yay += sender.delegateWeight;
-        else proposalsOption[nominateeIndex].nay += sender.delegateWeight;
+        if(yay) proposals[nominateeIndex].yay += sender.delegateWeight;
+        else proposals[nominateeIndex].nay += sender.delegateWeight;
         sender.credits = -1;
     }
 
@@ -307,23 +332,24 @@ contract VIOS is ERC20, ERC20Detailed {
     function execute(uint nominateeIndex, bool yay) constant
             returns (bool)
     {
-        require(proposalsOption[nominateeIndex].authorized, 'ANDREW: denied by Authority');
+        require(proposals[nominateeIndex].authorized, 'ANDREW: denied by Authority');
         uint tally = 0;
-        if(yay) tally = proposalsOption[nominateeIndex].authorizedYay;
-        else tally = proposalsOption[nominateeIndex].authorizedNay;
-        if(tally > div (totalSupply(), ELECTORATE_DIVISOR) ){
-            address trusteeNominee = proposalsOption[nominateeIndex].trusteeNominee;
+        if(yay) tally = proposals[nominateeIndex].authorizedYay;
+        else tally = proposals[nominateeIndex].authorizedNay;
+        if(tally > div (totalSupply(), DIVISOR_SIMPLE_MAJORITY) ){
+            address trusteeNominee = proposals[nominateeIndex].trusteeNominee;
             if(yay){
                 trustees.add(nominatedTrustee);
             }
             else {
                 trustees.remove(nominatedTrustee);                
             }
-            delete proposalsOption;
+            delete proposals;
             delete voters;
             return true;
         }
         // TODO: place penalty here
         return false;
     }
+
 }
