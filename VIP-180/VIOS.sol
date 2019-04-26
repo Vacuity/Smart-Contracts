@@ -166,8 +166,8 @@ contract VIOS is ERC20, ERC20Detailed {
 
 
     // ********* the ANDREW functions ***********//
-    uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 0;
-    uint public constant VOTE_PROPOSAL_REMOVE_TRUSTEE = 1;
+    uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 1;
+    uint public constant VOTE_PROPOSAL_REMOVE_TRUSTEE = 2;
     uint public constant BALLOT_STATUS_NONE = 0;
     uint public constant BALLOT_STATUS_DEFAULT = 1;
     uint public constant BALLOT_STATUS_VOTED = 2;
@@ -358,7 +358,8 @@ contract VIOS is ERC20, ERC20Detailed {
         total += proposals[nominateeIndex].authorizedNay;
         if(total >= div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay){
             if(proposals[nominateeIndex].type == VOTE_PROPOSAL_ADD_TRUSTEE){
-                trustees.add(proposal.trusteeNominee);
+                require(proposals[nominateeIndex].trusteeNominee != address(0), 'ANDREW: zero address not allowed');
+                trustees.add(proposals[nominateeIndex].trusteeNominee);
             }
             else if(proposals[nominateeIndex].type == VOTE_PROPOSAL_REMOVE_TRUSTEE) {
                 trustees.remove(proposals[nominateeIndex].trusteeNominee);                
