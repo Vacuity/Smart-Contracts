@@ -318,6 +318,7 @@ contract VIOS is ERC20, ERC20Detailed {
         uint yay = proposals[nominateeIndex].yay;
         uint nay = proposals[nominateeIndex].nay;
         require(auth.isSubscribed(msg.sender), 'ANDREW: sender is not Authority');
+        require (yayOrNay < 0 || yayOrNay > 1, 'ANDREW: invalid input'); 
         if(yayOrNay == 1) proposals[nominateeIndex].authorizedYay = yay;
         else if(yayOrNay == 0) proposals[nominateeIndex].authorizedNay = nay;
         proposals[nominateeIndex].authorized = true;
@@ -331,7 +332,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
-    function vote(uint nominateeIndex, bool yay, uint type) {
+    function vote(uint nominateeIndex, uint yayOrNay, uint type) {
         // If 'voter' or 'nominatedTrustee' are out of the range of the array,
         // this will throw automatically and revert all
         // changes.
@@ -340,14 +341,15 @@ contract VIOS is ERC20, ERC20Detailed {
         require (sender.status != BALLOT_STATUS_DELEGATED, 'ANDREW: credits delegated');
         require (sender.status != BALLOT_STATUS_VOTED, 'ANDREW: vote already cast');
         require (sender.status != BALLOT_STATUS_NONE, 'ANDREW: no ballot');
-        require (proposals[nominateeIndex].type != type, 'ANDREW: type not found'); // ensure the sender knows which proposal type they are voting on
-        if(yay) proposals[nominateeIndex].yay += sender.delegateWeight;
-        else proposals[nominateeIndex].nay += sender.delegateWeight;
+        require (proposals[nominateeIndex].type != type, 'ANDREW: type not found'); // requiring 'type' ensures the sender is aware of the proposal type
+        require (yayOrNay < 0 || yayOrNay > 1, 'ANDREW: invalid input'); 
+        if(yayOrNay == 1) proposals[nominateeIndex].yay += sender.delegateWeight;
+        else if(yayOrNay == 0) proposals[nominateeIndex].nay += sender.delegateWeight;
         sender.status = BALLOT_STATUS_VOTED;
     }
 
     /// @dev Attempts to assign the trustee
-    function execute(uint nominateeIndex, bool yay, uint type) constant
+    function execute(uint nominateeIndex, uint type) constant
             returns (bool)
     {
         Proposal proposal = proposals[nominateeIndex];
