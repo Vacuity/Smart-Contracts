@@ -166,8 +166,8 @@ contract VIOS is ERC20, ERC20Detailed {
 
 
     // ********* the ANDREW functions ***********//
-    uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 0;
-    uint public constant VOTE_PROPOSAL_REMOVE_TRUSTEE = 1;
+    uint public constant BALLOT_TYPE_ADD_TRUSTEE = 0;
+    uint public constant BALLOT_TYPE_REMOVE_TRUSTEE = 1;
     uint public constant BALLOT_STATUS_NONE = 0;
     uint public constant BALLOT_STATUS_DEFAULT = 1;
     uint public constant BALLOT_STATUS_VOTED = 2;
@@ -213,12 +213,14 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     function executeByCommunity(uint nominateeIndex){
-        require(trustees.has(proposals[nominateeIndex].trusteeNominee), "ANDREW: does not have trustee role");
+        Proposal proposal = proposals[nominateeIndex];
+        require(trustees.has(proposal.trusteeNominee), "ANDREW: does not have trustee role");
         require(current_block_number >= set_auth_block_number, 'ANDREW: set auth in progress');
-        if(proposals[nominateeIndex].yay > div (totalSupply(), DIVISOR_SIMPLE_MAJORITY) ){
+        if(total >= div (totalSupply(), uint256(majorityDivisor)) && proposal.authorizedYay > proposal.authorizedNay){
             auth = ATN(proposals[nominateeIndex].trusteeNominee);
             delete proposals;
             delete voters;
+            majorityDivisor = 2;
             set_auth_block_number = 0;
         }        
     }
@@ -236,7 +238,7 @@ contract VIOS is ERC20, ERC20Detailed {
         for (uint i = 0; i < trusteeNominees.length; i++) {
             // 'Proposal({...})' will create a temporary Proposal object 
             // 'proposals.push(...)' will append it to the end of 'proposals'.
-            require(type[i] == VOTE_PROPOSAL_REMOVE_TRUSTEE || type[i] = VOTE_PROPOSAL_ADD_TRUSTEE, 'ANDREW: invalid proposal');
+            require(type[i] == BALLOT_TYPE_REMOVE_TRUSTEE || type[i] = BALLOT_TYPE_ADD_TRUSTEE, 'ANDREW: invalid proposal');
             proposals.push(Proposal({
                 trusteeNominee: trusteeNominees[i],
                 yay: 0,
@@ -357,10 +359,10 @@ contract VIOS is ERC20, ERC20Detailed {
         uint total = proposal.authorizedYay;
         total += proposal.authorizedNay;
         if(total >= div (totalSupply(), uint256(majorityDivisor)) && proposal.authorizedYay > proposal.authorizedNay){
-            if(proposal.type == VOTE_PROPOSAL_ADD_TRUSTEE){
+            if(proposal.type == BALLOT_TYPE_ADD_TRUSTEE){
                 trustees.add(proposal.trusteeNominee);
             }
-            else if(proposal.type == VOTE_PROPOSAL_REMOVE_TRUSTEE) {
+            else if(proposal.type == BALLOT_TYPE_REMOVE_TRUSTEE) {
                 trustees.remove(proposal.trusteeNominee);                
             }
             delete proposals;
