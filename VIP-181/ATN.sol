@@ -17,13 +17,12 @@ contract ATN is ERC721Full, ERC721Mintable, ERC721Burnable, Ownable {
 
     constructor(
         string memory name,
-        string memory symbol,
-        address[] memory admins
+        string memory symbol
     )
         ERC721Full(name, symbol)
         public
     {
-        for(uint i = 0; i < admins.length; i++) Roles.add(admin, admins[i]);
+        Roles.add(admin, msg.sender);
     }
 
     function purchase(uint256 id) public payable {

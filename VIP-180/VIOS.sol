@@ -39,13 +39,16 @@ contract VIOS is ERC20, ERC20Detailed {
     /**
      * @dev Constructor that gives msg.sender all of existing tokens.
      */
-    constructor (string memory name, string memory symbol, uint8 decimals, ATN _auth) public {
+    constructor (string memory name, string memory symbol, uint8 decimals) 
+    ERC20() 
+    ERC20Detailed(name, symbol, decimals) 
+    public {
        // super(name, symbol, decimals);
         name = "VIOS Network Token";
         symbol = "VIOS";
         decimals = DECIMALS;
         SUPPLY_CAP = MAX_SUPPLY;
-        auth = _auth;
+        //auth = ATN(0xdC04977a2078C8FFDf086D618d1f961B6C546222);
         _mint(msg.sender, INITIAL_SUPPLY);
     }
 
@@ -74,10 +77,6 @@ contract VIOS is ERC20, ERC20Detailed {
         last_claim_timestamp = now;
         _mint(to, value);
         return true;
-    }
-
-    function getCurrentBlockNumber() internal returns (uint256){
-        return 0;
     }
 
     /**
