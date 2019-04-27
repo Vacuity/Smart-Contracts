@@ -72,68 +72,74 @@ contract ERC20 is IERC20 {
 
     uint256 private _totalSupply;
 
-    /**
-     * @dev Total number of tokens in existence.
-     */
-    function totalSupply() public view returns (uint256) {
+
+   /**
+    * @dev Total number of tokens in existence
+    */
+    function totalSupply() public view returns(uint256){
         return _totalSupply;
     }
-
     /**
-     * @dev Gets the balance of the specified address.
-     * @param owner The address to query the balance of.
-     * @return A uint256 representing the amount owned by the passed address.
-     */
-    function balanceOf(address owner) public view returns (uint256) {
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address owner) public view returns(uint256){
         return _balances[owner];
     }
-
     /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param owner address The address which owns the funds.
-     * @param spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address owner, address spender) public view returns (uint256) {
-        return _allowed[owner][spender];
-    }
+    * @dev Transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address to, uint256 value) public returns (bool){
+        require(to != address(0));
+        require(value <= _balances[msg.sender]);
 
-    /**
-     * @dev Transfer token to a specified address.
-     * @param to The address to transfer to.
-     * @param value The amount to be transferred.
-     */
-    function transfer(address to, uint256 value) public returns (bool) {
-        _transfer(msg.sender, to, value);
+        _balances[msg.sender] = _balances[msg.sender].sub(value);
+        _balances[to] = _balances[to].add(value);
+        //emit Transfer(msg.sender, _to, _value);
         return true;
     }
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     */
+    function transferFrom(address from, address to, uint256 value) public returns(bool){
+        require(to != address(0));
+        require(value <= _balances[from]);
+        require(value <= _allowed[from][msg.sender]);
 
+        _balances[from] = _balances[_from].sub(value);
+        _balances[to] = _balances[_to].add(_value);
+        _allowed[from][msg.sender] = _allowed[from][msg.sender].sub(value);
+        //emit Transfer(_from, _to, _value);
+        return true;
+    }
     /**
      * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
      * Beware that changing an allowance with this method brings the risk that someone may use both the old
      * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
      * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
      * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param spender The address which will spend the funds.
-     * @param value The amount of tokens to be spent.
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
      */
-    function approve(address spender, uint256 value) public returns (bool) {
-        _approve(msg.sender, spender, value);
+    function approve(address spender, uint256 value) public returns(bool){
+        _allowed[msg.sender][spender] = value;
+        //emit Approval(msg.sender, _spender, _value);
         return true;
     }
-
     /**
-     * @dev Transfer tokens from one address to another.
-     * Note that while this function emits an Approval event, this is not required as per the specification,
-     * and other compliant implementations may not emit the event.
-     * @param from address The address which you want to send tokens from
-     * @param to address The address which you want to transfer to
-     * @param value uint256 the amount of tokens to be transferred
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
      */
-    function transferFrom(address from, address to, uint256 value) public returns (bool) {
-        _transfer(from, to, value);
-        _approve(from, msg.sender, _allowed[from][msg.sender].sub(value));
-        return true;
+    function allowance(address owner, address spender) public view returns(uint256){
+        return _allowed[owner][spender];
     }
 
     /**
@@ -237,32 +243,53 @@ contract ERC20 is IERC20 {
     }
 }
 
-/**
- * @title ERC20Mintable
- * @dev ERC20 minting logic.
- */
-contract ERC20Mintable is ERC20, MinterRole {
-    /**
-     * @dev Function to mint tokens
-     * @param to The address that will receive the minted tokens.
-     * @param value The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address to, uint256 value) public onlyMinter returns (bool) {
-        _mint(to, value);
-        return true;
+contract Trust {
+    using Roles for Roles.Role;
+
+    event TrusteeAdded(address indexed account);
+    event TrusteeRemoved(address indexed account);
+
+    Roles.Role private _trustees;
+    address[] keys;
+
+    constructor () internal {
+        _addTrustee(msg.sender);
+    }
+
+    modifier trusteesOnly() {
+        require(isTrustee(msg.sender), "Trust: caller does not have the trustee role");
+        _;
+    }
+
+    function isTrustee(address account) public view returns (bool) {
+        return _trustees.has(account);
+    }
+
+    function renounceTrust() public {
+        _removeTrustee(msg.sender);
+    }
+
+    function _addTrustee(address account) internal {
+        require(account != address(0), 'Trust: zero address not allowed');
+        _trustees.add(account);
+        emit TrusteeAdded(account);
+    }
+
+    function _removeTrustee(address account) internal {
+        _trustees.remove(account);
+        emit TrusteeRemoved(account);
     }
 }
 
 /**
- * @title Capped token
- * @dev Mintable token with a token cap.
+ * @title Escrow
+ * @dev Token dispensary with a token cap.
  */
-contract ERC20Capped is ERC20Mintable {
+contract Escrow is ERC20, Trust {
     uint256 private _cap;
 
     constructor (uint256 cap) public {
-        require(cap > 0, "ERC20Capped: cap is 0");
+        require(cap > 0, "Escrow: cap is 0");
         _cap = cap;
     }
 
@@ -274,7 +301,7 @@ contract ERC20Capped is ERC20Mintable {
     }
 
     function _mint(address account, uint256 value) internal {
-        require(totalSupply().add(value) <= _cap, "ERC20Capped: cap exceeded");
+        require(totalSupply().add(value) <= _cap, "Escrow: cap exceeded");
         super._mint(account, value);
     }
 }
@@ -284,10 +311,7 @@ contract ERC20Capped is ERC20Mintable {
  * @title VIOS Network Token
  * @dev 
  */
-contract VIOS is ERC20Capped, ERC20Detailed {
-    using Roles for Roles.Role;
-    Roles.Role private trustees;
-
+contract VIOS is Escrow, ERC20Detailed {
     /**
      * @dev The Authority Node is owned by a multisig wallet that requires 21 signatures. These signers are the Authority Nodes.
      */
@@ -312,11 +336,12 @@ contract VIOS is ERC20Capped, ERC20Detailed {
      * @dev Constructor that gives msg.sender all of existing tokens.
      */
     constructor (address _auth) 
-    ERC20Capped(MAX_SUPPLY) 
+    Escrow(MAX_SUPPLY) 
     ERC20Detailed("VIOS Network Token", "VIOS", DECIMALS) 
     public {
         auth = ATN(_auth);
-        super.mint(msg.sender, INITIAL_SUPPLY);
+        super._mint(msg.sender, INITIAL_SUPPLY);
+        _removeTrustee(msg.sender); // caller was added to trustees when trustee role was created 
         last_claim_timestamp = now;
     }
     
@@ -331,16 +356,15 @@ contract VIOS is ERC20Capped, ERC20Detailed {
      * @param value The amount of tokens to mint.
      * @return A boolean that indicates if the operation was successful.
      */
-    function withdrawFromEscrow(uint256 value) public returns (bool) {
-        require(trustees.has(msg.sender), "VIOS: caller does not have trustee role");
+    function withdrawFromEscrow(uint256 value) public trusteesOnly returns (bool) {
         uint256 balance = TOKENS_PER_SECOND * (now - last_claim_timestamp);
         require(value <= balance, "VIOS: claim exceeds escrow");
-        super.mint(msg.sender, value);
+        super._mint(msg.sender, value);
         last_claim_timestamp = now;
         return true;
     }
     
-    function withdrawEscrow() public returns (bool){
+    function withdrawEscrow() public trusteesOnly returns (bool){
         return withdrawFromEscrow(escrowBalance());
     }
 
@@ -360,7 +384,6 @@ contract VIOS is ERC20Capped, ERC20Detailed {
     uint public constant DELEGATE_CHAIN_LIMIT = 10;
     uint public constant  SET_AUTH_WAIT = 28800  * (10 ** uint256(DECIMALS)); // the Authority has 8 hours to revert the setAuth change
     struct voter {
-        uint256 credits; // credits is accumulated by delegation
         uint status;
         address delegate;   // the person that the voter chooses to delegate their vote to instead of voting themselves
         bool isDelegate;
@@ -383,9 +406,19 @@ contract VIOS is ERC20Capped, ERC20Detailed {
 
     // Declare state variable to store a 'ballotVoter' struct for every possible address.
     mapping(address => voter) public voters;
+    mapping(address => uint256) public credits; // credits are accumulated by delegation
+    uint public deposit;
+    address public sponsorAddr;
+
     address[] delegated;
-    address[] voted;
-    uint public set_auth_timestamp; 
+    address[] voted;    
+    uint public auth_timestamp; 
+    uint public proposal_fee;
+
+    function setProposalFee(uint amount){
+        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
+        proposal_fee = amount;
+    }
 
     function setAuth(ATN newAuth) private {
         require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
@@ -395,30 +428,36 @@ contract VIOS is ERC20Capped, ERC20Detailed {
 
     function setAuthByCommunity(uint nominateeIndex) public {
         // TODO: attach a high price so that this function does not get spammed
-        require(trustees.has(msg.sender), "ANDREW: caller does not have trustee role");
-        require(set_auth_timestamp == 0, 'ANDREW: set auth in progress');
-        set_auth_timestamp = now + SET_AUTH_WAIT;
+        require(isTrustee(msg.sender), "ANDREW: caller does not have trustee role");
+        require(auth_timestamp == 0, 'ANDREW: set auth in progress');
+        auth_timestamp = now + SET_AUTH_WAIT;
     }
     
     function executeByCommunity(uint nominateeIndex) public {
-        require(trustees.has(proposals[nominateeIndex].trusteeNominee), "ANDREW: does not have trustee role");
-        require(now >= set_auth_timestamp, 'ANDREW: set auth in progress');
+        require(isTrustee(proposals[nominateeIndex].trusteeNominee), "ANDREW: does not have trustee role");
+        require(now >= auth_timestamp, 'ANDREW: set auth in progress');
         if(SafeMath.add(proposals[nominateeIndex].authorizedYay, proposals[nominateeIndex].authorizedNay) >= SafeMath.div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay){
             auth = ATN(proposals[nominateeIndex].trusteeNominee);
             delete proposals;
             delete delegated;
             delete voted;
             majorityDivisor = 2;
-            set_auth_timestamp = 0;
+            auth_timestamp = 0;
         }        
     }
 
     // Opens new poll for choosing one of the 'trustees' nominees
-    function open(address[] memory trusteeNominees, uint[] memory proposalTypes, uint _majorityDivisor) public {
+    function open(address[] memory trusteeNominees, uint[] memory proposalTypes, uint _majorityDivisor, uint amount) public {
         require(auth.isSubscribed(msg.sender) || proposals.length == 0, 'ANDREW: poll in progress');
+        require(amount >= proposal_fee, 'ANDREW: requires ' + proposal_fee + ' ' + symbol());
         require(_majorityDivisor <= 5, 'ANDREW: requires 20% participation or more');
         require(_majorityDivisor >= 2, 'ANDREW: requires 50% participation or less');
         require(trusteeNominees.length == proposalTypes.length, 'ANDREW: invalid proposal');
+
+        deposit = amount;
+        _transfer(msg.sender, address(this), amount);
+        sponsorAddr = msg.sender;
+
         // For every provided trustee, a new proposal object is created and added to the array's end.
         delete proposals;
         delete delegated;
@@ -442,13 +481,29 @@ contract VIOS is ERC20Capped, ERC20Detailed {
 
     function close() public {
         require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
+        if(deposit > 0){
+            bool refund = false;
+            for (uint i = 0; i < proposals.length; i++) {
+                if(proposals[i].authorized) refund = true;
+            }
+            if(refund){
+                _transfer(address(this), sponsorAddr, deposit); // refund the deposit
+            }
+            else {
+                _transfer(address(this), msg.sender, deposit); // confiscate the deposit
+            }
+        }
         delete proposals;
         delete delegated;
         delete voted;
         majorityDivisor = 2;
+        deposit = 0;
+        sponsorAddr = address(0);
+        auth_timestamp = 0;
+        proposal_fee = 0;
     }
 
-    function claimBallot() public {
+    function claimBallot(uint256 amount) public {
         require(proposals.length != 0, 'ANDREW: poll closed');
         if(auth.isSubscribed(msg.sender)){
             // the Authority address is not allowed to vote
@@ -456,11 +511,24 @@ contract VIOS is ERC20Capped, ERC20Detailed {
             voters[msg.sender].status = BALLOT_STATUS_NONE;
         }
         else{
+            uint256 c = credits[msg.sender];
+            if(c > 0){
+                credits[msg.sender] = 0;
+                _transfer(address(this), msg.sender, c); // refund the leftover credits
+            }
             voter storage sender = voters[msg.sender];
             require(sender.status != BALLOT_STATUS_ACTIVE, 'ANDREW: ballot already exists');
-            sender.credits = balanceOf(msg.sender);
+            require(amount <= balanceOf(msg.sender), 'ANDREW: insufficient funds');
+            _transfer(msg.sender, address(this), amount);
+            credits[msg.sender] = amount;
             sender.status = BALLOT_STATUS_ACTIVE;
         }
+    }
+    
+    function claimCredits() public returns (bool){
+        require(proposals.length == 0, 'ANDREW: poll in progress');
+        _transfer(address(this), msg.sender, credits[msg.sender]);
+        delete credits[msg.sender];
     }
 
     /// Delegate votes to the voter 'delegateAddr'.
@@ -470,7 +538,7 @@ contract VIOS is ERC20Capped, ERC20Detailed {
         require(!auth.isSubscribed(msg.sender), 'ANDREW: Authority not allowed');
         // Self-delegation is not allowed.
         require(delegateAddr != msg.sender, 'ANDREW: self-delegation not allowed');
-        voter memory sender = voters[msg.sender];
+        voter storage sender = voters[msg.sender];
         require (getIndex(delegated, msg.sender) == -1, 'ANDREW: credits delegated');
         require (getIndex(voted, msg.sender) == -1, 'ANDREW: vote already cast');
         require (sender.status != BALLOT_STATUS_NONE, 'ANDREW: no ballot');
@@ -491,16 +559,17 @@ contract VIOS is ERC20Capped, ERC20Detailed {
             
             delegateAddr = voters[delegateAddr].delegate;
         }
-
-        require (getIndex(delegated, delegateAddr) == -1, 'ANDREW: delegate credits delegated');
+        
+        require (voters[delegateAddr].status != BALLOT_STATUS_NONE, 'ANDREW: delegate has no ballot');
+        require (getIndex(delegated, delegateAddr) == -1, 'ANDREW: delegate credits delegated'); // if delegate has made made their choice, and does not return to the poll to check their credit balance, users who send credits afterwards will effectively waste those credits
         require (getIndex(voted, delegateAddr) == -1, 'ANDREW: delegate vote already cast');
 
         // Since 'sender' is a reference, this will modify 'sender.ballot[nominatedTrustee].credits'
         sender.delegate = delegateAddr;
-        voter memory delegate = voters[delegateAddr];
-        delegate.credits += sender.credits;
+        voters[delegateAddr].isDelegate = true;
+        credits[delegateAddr] += credits[msg.sender];
         delegated.push(msg.sender);
-        delete sender;
+        delete voters[msg.sender];
     }
 
     function authorize(uint nominateeIndex, uint yayOrNay) public {
@@ -532,10 +601,10 @@ contract VIOS is ERC20Capped, ERC20Detailed {
         require (sender.status != BALLOT_STATUS_NONE, 'ANDREW: no ballot');
         require (proposals[nominateeIndex].proposalType == proposalType, 'ANDREW: type not found'); // requiring 'type' ensures the sender is aware of the proposal type
         require (yayOrNay == 0 || yayOrNay == 1, 'ANDREW: invalid input'); 
-        if(yayOrNay == 1) proposals[nominateeIndex].yay += sender.credits;
-        else if(yayOrNay == 0) proposals[nominateeIndex].nay += sender.credits;
+        if(yayOrNay == 1) proposals[nominateeIndex].yay += credits[msg.sender];
+        else if(yayOrNay == 0) proposals[nominateeIndex].nay += credits[msg.sender];
         voted.push(msg.sender);
-        delete sender;
+        delete voters[msg.sender];
     }
 
     /// @dev Attempts to assign the trustee
@@ -548,10 +617,10 @@ contract VIOS is ERC20Capped, ERC20Detailed {
         if(total >= SafeMath.div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay){
             if(proposals[nominateeIndex].proposalType == VOTE_PROPOSAL_ADD_TRUSTEE){
                 require(proposals[nominateeIndex].trusteeNominee != address(0), 'ANDREW: zero address not allowed');
-                trustees.add(proposals[nominateeIndex].trusteeNominee);
+                _addTrustee(proposals[nominateeIndex].trusteeNominee);
             }
             else if(proposals[nominateeIndex].proposalType == VOTE_PROPOSAL_REMOVE_TRUSTEE) {
-                trustees.remove(proposals[nominateeIndex].trusteeNominee);                
+                _removeTrustee(proposals[nominateeIndex].trusteeNominee);                
             }
             delete proposals;
             delete delegated;
@@ -559,7 +628,6 @@ contract VIOS is ERC20Capped, ERC20Detailed {
             majorityDivisor = 2;
             return true;
         }
-        // TODO: place penalty here
         return false;
     }
 
