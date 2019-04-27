@@ -11,7 +11,7 @@ import "./ATN.sol";
  * @title VIOS Network Token
  * @dev 
  */
-contract VIOS is ERC20, ERC20Detailed {
+contract VIOS is ERC20Capped, ERC20Detailed {
     using Roles for Roles.Role;
     Roles.Role private trustees;
 
@@ -22,46 +22,33 @@ contract VIOS is ERC20, ERC20Detailed {
 
     uint8 public constant DECIMALS = 18;
     uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(DECIMALS));
+    uint256 public constant TEST_INITIAL_SUPPLY = 10 * (10 ** uint256(DECIMALS));
     uint256 public constant MAX_SUPPLY = 500000090 * (10 ** uint256(DECIMALS));
     uint256 public constant TOKENS_PER_SECOND = 38059 * (10 ** uint256(DECIMALS - 5));
 
     uint256 public last_claim_timestamp = 0;
-    uint256 public SUPPLY_CAP;
-
-
-    mapping(address => uint256) balances;
-    mapping (address => mapping (address => uint256)) internal allowed;
 
     //function getTrustees() public returns (Roles.Role memory){
     //    return trustees;
     //}
 
+    mapping(address => uint256) balances;
+    mapping (address => mapping (address => uint256)) internal allowed;
+
     /**
      * @dev Constructor that gives msg.sender all of existing tokens.
      */
-    constructor (string memory name, string memory symbol, uint8 decimals) 
-    ERC20() 
-    ERC20Detailed(name, symbol, decimals) 
+    constructor (address _auth) 
+    ERC20Capped(MAX_SUPPLY) 
+    ERC20Detailed("VIOS Network Token", "VIOS", DECIMALS) 
     public {
-       // super(name, symbol, decimals);
-        name = "VIOS Network Token";
-        symbol = "VIOS";
-        decimals = DECIMALS;
-        SUPPLY_CAP = MAX_SUPPLY;
-        auth = ATN(0x08970FEd061E7747CD9a38d680A601510CB659FB);
-        //_mint(msg.sender, INITIAL_SUPPLY);
+        auth = ATN(_auth);
+        mint(msg.sender, uint256(1));
         last_claim_timestamp = now;
     }
 
     function isVIOSNetworkToken() public pure returns (bool) {
         return true;
-    }
-
-    /**
-     * @return the cap for the token minting.
-     */
-    function cap() public view returns (uint256) {
-        return SUPPLY_CAP;
     }
 
     /**
@@ -71,13 +58,13 @@ contract VIOS is ERC20, ERC20Detailed {
      */
     function claimTokens(uint256 value) public returns (bool) {
         require(trustees.has(msg.sender), "VIOS: sender does not have trustee role");
-        require(totalSupply().add(value) <= SUPPLY_CAP, "VIOS: cap exceeded");
         uint256 balance = TOKENS_PER_SECOND * (now - last_claim_timestamp);
         require(value <= balance, "VIOS: claim exceeds balance");
-        _mint(msg.sender, value);
+        mint(msg.sender, value);
         last_claim_timestamp = now;
         return true;
     }
+    
     
     function availableTokens() public returns (uint256){
         return TOKENS_PER_SECOND * (now - last_claim_timestamp);
@@ -155,7 +142,6 @@ contract VIOS is ERC20, ERC20Detailed {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
 
     // ********* the ANDREW functions ***********//
     uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 1;
@@ -376,3 +362,4 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
 }
+

@@ -8,45 +8,20 @@ import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/mas
 import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/access/Roles.sol";
 
 contract ATN is ERC721Full, ERC721Mintable, ERC721Burnable, Ownable {
-
-    using Roles for Roles.Role;
-    Roles.Role private admin;
-
-    string public constant name_ = "Identity Node";
-    string public constant symbol_ = "IDN";
-
     constructor(
         string memory name,
         string memory symbol
     )
-        ERC721Full(name, symbol)
+        ERC721Full(name, symbol) 
+        Ownable()
         public
     {
-        Roles.add(admin, msg.sender);
-        create(msg.sender, "http://vios.network/o/AuthorityNode", "http://vios.network/o/AuthorityNode");
+        uint256 id = uint256(keccak256(abi.encodePacked("http://vios.network/o/AuthorityNode")));
+        _mint(msg.sender, id);
+        _setTokenURI(id, "http://vios.network/o/AuthorityNode");
     }
 
-    function purchase(uint256 id) public payable {
-        require(msg.value == getPrice(id));
-        _mint(msg.sender, totalSupply());
-    }
-
-    function getPrice(uint256 id) public returns (uint256){
-        return 0;
-    }
-
-    function create(
-        address owner,
-        string memory uri,
-        string memory tokenUri
-    )
-        public
-        returns (bool)
-    {
-        require(Roles.has(admin, msg.sender), "IDN: does not have admin role");
-        uint256 id = uint256(keccak256(abi.encodePacked(uri)));
-        _mint(owner, id);
-        _setTokenURI(id, tokenUri);
+    function isAuthorityNodeToken() public pure returns (bool) {
         return true;
     }
 
