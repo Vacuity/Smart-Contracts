@@ -1,10 +1,283 @@
 pragma solidity ^0.5.0;
 
-import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC20/ERC20.sol";
-import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC20/ERC20Detailed.sol";
+//import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC20/ERC20Capped.sol";
+//import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC20/ERC20Detailed.sol";
 import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/access/Roles.sol";
 import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/math/SafeMath.sol";
 import "./ATN.sol";
+
+
+interface IERC20 {
+    function transfer(address to, uint256 value) external returns (bool);
+
+    function approve(address spender, uint256 value) external returns (bool);
+
+    function transferFrom(address from, address to, uint256 value) external returns (bool);
+
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address who) external view returns (uint256);
+
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+/**
+ * @title ERC20Detailed token
+ * @dev The decimals are only for visualization purposes.
+ * All the operations are done using the smallest and indivisible token unit,
+ * just as on Ethereum all the operations are done in wei.
+ */
+contract ERC20Detailed is IERC20 {
+    string private _name;
+    string private _symbol;
+    uint8 private _decimals;
+
+    constructor (string memory name, string memory symbol, uint8 decimals) public {
+        _name = name;
+        _symbol = symbol;
+        _decimals = decimals;
+    }
+
+    /**
+     * @return the name of the token.
+     */
+    function name() public view returns (string memory) {
+        return _name;
+    }
+
+    /**
+     * @return the symbol of the token.
+     */
+    function symbol() public view returns (string memory) {
+        return _symbol;
+    }
+
+    /**
+     * @return the number of decimals of the token.
+     */
+    function decimals() public view returns (uint8) {
+        return _decimals;
+    }
+}
+
+contract ERC20 is IERC20 {
+    using SafeMath for uint256;
+
+    mapping (address => uint256) private _balances;
+
+    mapping (address => mapping (address => uint256)) private _allowed;
+
+    uint256 private _totalSupply;
+
+    /**
+     * @dev Total number of tokens in existence.
+     */
+    function totalSupply() public view returns (uint256) {
+        return _totalSupply;
+    }
+
+    /**
+     * @dev Gets the balance of the specified address.
+     * @param owner The address to query the balance of.
+     * @return A uint256 representing the amount owned by the passed address.
+     */
+    function balanceOf(address owner) public view returns (uint256) {
+        return _balances[owner];
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param owner address The address which owns the funds.
+     * @param spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address owner, address spender) public view returns (uint256) {
+        return _allowed[owner][spender];
+    }
+
+    /**
+     * @dev Transfer token to a specified address.
+     * @param to The address to transfer to.
+     * @param value The amount to be transferred.
+     */
+    function transfer(address to, uint256 value) public returns (bool) {
+        _transfer(msg.sender, to, value);
+        return true;
+    }
+
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param spender The address which will spend the funds.
+     * @param value The amount of tokens to be spent.
+     */
+    function approve(address spender, uint256 value) public returns (bool) {
+        _approve(msg.sender, spender, value);
+        return true;
+    }
+
+    /**
+     * @dev Transfer tokens from one address to another.
+     * Note that while this function emits an Approval event, this is not required as per the specification,
+     * and other compliant implementations may not emit the event.
+     * @param from address The address which you want to send tokens from
+     * @param to address The address which you want to transfer to
+     * @param value uint256 the amount of tokens to be transferred
+     */
+    function transferFrom(address from, address to, uint256 value) public returns (bool) {
+        _transfer(from, to, value);
+        _approve(from, msg.sender, _allowed[from][msg.sender].sub(value));
+        return true;
+    }
+
+    /**
+     * @dev Increase the amount of tokens that an owner allowed to a spender.
+     * approve should be called when _allowed[msg.sender][spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * Emits an Approval event.
+     * @param spender The address which will spend the funds.
+     * @param addedValue The amount of tokens to increase the allowance by.
+     */
+    function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
+        _approve(msg.sender, spender, _allowed[msg.sender][spender].add(addedValue));
+        return true;
+    }
+
+    /**
+     * @dev Decrease the amount of tokens that an owner allowed to a spender.
+     * approve should be called when _allowed[msg.sender][spender] == 0. To decrement
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * Emits an Approval event.
+     * @param spender The address which will spend the funds.
+     * @param subtractedValue The amount of tokens to decrease the allowance by.
+     */
+    function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
+        _approve(msg.sender, spender, _allowed[msg.sender][spender].sub(subtractedValue));
+        return true;
+    }
+
+    /**
+     * @dev Transfer token for a specified addresses.
+     * @param from The address to transfer from.
+     * @param to The address to transfer to.
+     * @param value The amount to be transferred.
+     */
+    function _transfer(address from, address to, uint256 value) internal {
+        require(to != address(0), "ERC20: transfer to the zero address");
+
+        _balances[from] = _balances[from].sub(value);
+        _balances[to] = _balances[to].add(value);
+        //emit Transfer(from, to, value);
+    }
+
+    /**
+     * @dev Internal function that mints an amount of the token and assigns it to
+     * an account. This encapsulates the modification of balances such that the
+     * proper events are emitted.
+     * @param account The account that will receive the created tokens.
+     * @param value The amount that will be created.
+     */
+    function _mint(address account, uint256 value) internal {
+        require(account != address(0), "ERC20: mint to the zero address");
+
+        _totalSupply = _totalSupply.add(value);
+        _balances[account] = _balances[account].add(value);
+        //emit Transfer(address(0), account, value);
+    }
+
+    /**
+     * @dev Internal function that burns an amount of the token of a given
+     * account.
+     * @param account The account whose tokens will be burnt.
+     * @param value The amount that will be burnt.
+     */
+    function _burn(address account, uint256 value) internal {
+        require(account != address(0), "ERC20: burn from the zero address");
+
+        _totalSupply = _totalSupply.sub(value);
+        _balances[account] = _balances[account].sub(value);
+        //emit Transfer(account, address(0), value);
+    }
+
+    /**
+     * @dev Approve an address to spend another addresses' tokens.
+     * @param owner The address that owns the tokens.
+     * @param spender The address that will spend the tokens.
+     * @param value The number of tokens that can be spent.
+     */
+    function _approve(address owner, address spender, uint256 value) internal {
+        require(owner != address(0), "ERC20: approve from the zero address");
+        require(spender != address(0), "ERC20: approve to the zero address");
+
+        _allowed[owner][spender] = value;
+        //emit Approval(owner, spender, value);
+    }
+
+    /**
+     * @dev Internal function that burns an amount of the token of a given
+     * account, deducting from the sender's allowance for said account. Uses the
+     * internal burn function.
+     * Emits an Approval event (reflecting the reduced allowance).
+     * @param account The account whose tokens will be burnt.
+     * @param value The amount that will be burnt.
+     */
+    function _burnFrom(address account, uint256 value) internal {
+        _burn(account, value);
+        _approve(account, msg.sender, _allowed[account][msg.sender].sub(value));
+    }
+}
+
+/**
+ * @title ERC20Mintable
+ * @dev ERC20 minting logic.
+ */
+contract ERC20Mintable is ERC20, MinterRole {
+    /**
+     * @dev Function to mint tokens
+     * @param to The address that will receive the minted tokens.
+     * @param value The amount of tokens to mint.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function mint(address to, uint256 value) public onlyMinter returns (bool) {
+        _mint(to, value);
+        return true;
+    }
+}
+
+/**
+ * @title Capped token
+ * @dev Mintable token with a token cap.
+ */
+contract ERC20Capped is ERC20Mintable {
+    uint256 private _cap;
+
+    constructor (uint256 cap) public {
+        require(cap > 0, "ERC20Capped: cap is 0");
+        _cap = cap;
+    }
+
+    /**
+     * @return the cap for the token minting.
+     */
+    function cap() public view returns (uint256) {
+        return _cap;
+    }
+
+    function _mint(address account, uint256 value) internal {
+        require(totalSupply().add(value) <= _cap, "ERC20Capped: cap exceeded");
+        super._mint(account, value);
+    }
+}
 
 
 /**
@@ -43,9 +316,11 @@ contract VIOS is ERC20Capped, ERC20Detailed {
     ERC20Detailed("VIOS Network Token", "VIOS", DECIMALS) 
     public {
         auth = ATN(_auth);
-        mint(msg.sender, uint256(1));
+        super.mint(msg.sender, INITIAL_SUPPLY);
         last_claim_timestamp = now;
     }
+    
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     function isVIOSNetworkToken() public pure returns (bool) {
         return true;
@@ -57,15 +332,14 @@ contract VIOS is ERC20Capped, ERC20Detailed {
      * @return A boolean that indicates if the operation was successful.
      */
     function claimTokens(uint256 value) public returns (bool) {
-        require(trustees.has(msg.sender), "VIOS: sender does not have trustee role");
+        require(trustees.has(msg.sender), "VIOS: caller does not have trustee role");
         uint256 balance = TOKENS_PER_SECOND * (now - last_claim_timestamp);
         require(value <= balance, "VIOS: claim exceeds balance");
-        mint(msg.sender, value);
+        super.mint(msg.sender, value);
         last_claim_timestamp = now;
         return true;
     }
-    
-    
+
     function availableTokens() public returns (uint256){
         return TOKENS_PER_SECOND * (now - last_claim_timestamp);
     }
@@ -90,12 +364,12 @@ contract VIOS is ERC20Capped, ERC20Detailed {
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint256 _value) public returns (bool){
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
+        require(_to != address(0), "VIOS: Zero address not allowed");
+        require(_value <= balances[msg.sender], "VIOS: insufficient funds");
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
+        //emit Transfer(msg.sender, _to, _value);
         return true;
     }
     /**
@@ -105,14 +379,14 @@ contract VIOS is ERC20Capped, ERC20Detailed {
      * @param _value uint256 the amount of tokens to be transferred
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns(bool){
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
+        require(_to != address(0), "VIOS: Zero address not allowed");
+        require(_value <= balances[_from], "VIOS: insufficient funds");
+        require(_value <= allowed[_from][msg.sender], "VIOS: not allowed by receiver");
 
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
+        //emit Transfer(_from, _to, _value);
         return true;
     }
     /**
@@ -126,7 +400,7 @@ contract VIOS is ERC20Capped, ERC20Detailed {
      */
     function approve(address _spender, uint256 _value) public returns(bool){
         allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+        //emit Approval(msg.sender, _spender, _value);
         return true;
     }
     /**
@@ -140,8 +414,8 @@ contract VIOS is ERC20Capped, ERC20Detailed {
     }
 
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    //event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    //event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     // ********* the ANDREW functions ***********//
     uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 1;
@@ -149,7 +423,7 @@ contract VIOS is ERC20Capped, ERC20Detailed {
     uint public constant BALLOT_STATUS_NONE = 0;
     uint public constant BALLOT_STATUS_ACTIVE = 1;
     uint public constant DELEGATE_CHAIN_LIMIT = 10;
-    uint public constant  SET_AUTH_WAIT = 1000000000000; //TODO
+    uint public constant  SET_AUTH_WAIT = 28800  * (10 ** uint256(DECIMALS)); // the Authority has 8 hours to revert the setAuth change
     struct voter {
         uint256 credits; // credits is accumulated by delegation
         uint status;
@@ -176,6 +450,7 @@ contract VIOS is ERC20Capped, ERC20Detailed {
     mapping(address => voter) public voters;
     address[] delegated;
     address[] voted;
+    uint public set_auth_timestamp; 
 
     function setAuth(ATN newAuth) private {
         require(auth.isSubscribed(msg.sender), 'ANDREW: sender is not Authority');
@@ -183,14 +458,25 @@ contract VIOS is ERC20Capped, ERC20Detailed {
         auth = newAuth;
     }
 
-    uint public set_auth_block_number; // the Authority has 8 hours to revert the setAuth change
     function setAuthByCommunity(uint nominateeIndex) public {
         // TODO: attach a high price so that this function does not get spammed
-        require(trustees.has(msg.sender), "ANDREW: sender does not have trustee role");
-        require(set_auth_block_number == 0, 'ANDREW: set auth in progress');
-        set_auth_block_number = block.number + SET_AUTH_WAIT;
+        require(trustees.has(msg.sender), "ANDREW: caller does not have trustee role");
+        require(set_auth_timestamp == 0, 'ANDREW: set auth in progress');
+        set_auth_timestamp = now + SET_AUTH_WAIT;
     }
     
+    function executeByCommunity(uint nominateeIndex) public {
+        require(trustees.has(proposals[nominateeIndex].trusteeNominee), "ANDREW: does not have trustee role");
+        require(now >= set_auth_timestamp, 'ANDREW: set auth in progress');
+        if(SafeMath.add(proposals[nominateeIndex].authorizedYay, proposals[nominateeIndex].authorizedNay) >= SafeMath.div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay){
+            auth = ATN(proposals[nominateeIndex].trusteeNominee);
+            delete proposals;
+            delete delegated;
+            delete voted;
+            majorityDivisor = 2;
+            set_auth_timestamp = 0;
+        }        
+    }
 
     // Opens new poll for choosing one of the 'trustees' nominees
     function open(address[] memory trusteeNominees, uint[] memory proposalTypes, uint _majorityDivisor) public {
@@ -228,6 +514,7 @@ contract VIOS is ERC20Capped, ERC20Detailed {
     }
 
     function claimBallot() public {
+        require(proposals.length != 0, 'ANDREW: poll closed');
         if(auth.isSubscribed(msg.sender)){
             // the Authority address is not allowed to vote
             // the auth can alternatively call doVote directly
@@ -348,18 +635,4 @@ contract VIOS is ERC20Capped, ERC20Detailed {
         return -1;
     }
 
-    function executeByCommunity(uint nominateeIndex) public {
-        require(trustees.has(proposals[nominateeIndex].trusteeNominee), "ANDREW: does not have trustee role");
-        require(block.number >= set_auth_block_number, 'ANDREW: set auth in progress');
-        if(SafeMath.add(proposals[nominateeIndex].authorizedYay, proposals[nominateeIndex].authorizedNay) >= SafeMath.div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay){
-            auth = ATN(proposals[nominateeIndex].trusteeNominee);
-            delete proposals;
-            delete delegated;
-            delete voted;
-            majorityDivisor = 2;
-            set_auth_block_number = 0;
-        }        
-    }
-
 }
-
