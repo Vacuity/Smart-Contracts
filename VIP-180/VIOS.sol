@@ -23,10 +23,10 @@ contract VIOS is ERC20, ERC20Detailed {
     uint8 public constant DECIMALS = 18;
     uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(DECIMALS));
     uint256 public constant MAX_SUPPLY = 500000090 * (10 ** uint256(DECIMALS));
-    uint256 public constant TOKENS_PER_BLOCK = 38059 * (10 ** uint256(DECIMALS - 4));
+    uint256 public constant TOKENS_PER_SECOND = 38059 * (10 ** uint256(DECIMALS - 5));
 
-    uint256 public last_claim_block_number = 0;
-    uint256 public SUPPLY_CAP;
+    uint256 public last_claim_timestamp = 0;
+    uint256 public _cap;
 
 
     mapping(address => uint256) balances;
@@ -44,7 +44,7 @@ contract VIOS is ERC20, ERC20Detailed {
         name = "VIOS Network Token";
         symbol = "VIOS";
         decimals = DECIMALS;
-        SUPPLY_CAP = MAX_SUPPLY;
+        _cap = MAX_SUPPLY;
         auth = _auth;
         _mint(msg.sender, INITIAL_SUPPLY);
     }
@@ -57,7 +57,7 @@ contract VIOS is ERC20, ERC20Detailed {
      * @return the cap for the token minting.
      */
     function cap() public view returns (uint256) {
-        return SUPPLY_CAP;
+        return _cap;
     }
 
     /**
@@ -68,11 +68,10 @@ contract VIOS is ERC20, ERC20Detailed {
      */
     function claimTokens(address to, uint256 value) public returns (bool) {
         require(trustees.has(msg.sender), "VIOS: sender does not have trustee role");
-        require(totalSupply().add(value) <= SUPPLY_CAP, "VIOS: cap exceeded");
-        uint256 current_block_number = block.number;
-        uint256 balance = TOKENS_PER_BLOCK * (current_block_number - last_claim_block_number);
+        require(totalSupply().add(value) <= _cap, "VIOS: cap exceeded");
+        uint256 balance = TOKENS_PER_SECOND * (now - last_claim_timestamp);
         require(value <= balance, "VIOS: claim exceeds balance");
-        last_claim_block_number = current_block_number;
+        last_claim_timestamp = now;
         _mint(to, value);
         return true;
     }
