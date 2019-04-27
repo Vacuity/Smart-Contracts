@@ -27,7 +27,7 @@ contract VIOS is ERC20, ERC20Detailed {
     string public name = "VIOS Network Token";
     string public symbol = "VIOS";
     uint8 public decimals = DECIMALS;
-    uint8 public last_claim_block_number = 0;
+    uint256 public last_claim_block_number = 0;
     uint256 public _cap;
 
 
@@ -84,7 +84,7 @@ contract VIOS is ERC20, ERC20Detailed {
         require(trustees.has(msg.sender), "VIOS: sender does not have trustee role");
         require(totalSupply().add(value) <= _cap, "VIOS: cap exceeded");
         require(value <= balance, "VIOS: claim exceeds balance");
-        uint256 current_block_number = 0;
+        uint256 current_block_number = block.number;
         uint256 balance = TOKENS_PER_BLOCK * (current_block_number - last_claim_block_number);
         last_claim_block_number = current_block_number;
         _mint(to, value);
@@ -213,7 +213,7 @@ contract VIOS is ERC20, ERC20Detailed {
         // TODO: attach a high price so that this function does not get spammed
         require(trustees.has(msg.sender), "ANDREW: sender does not have trustee role");
         require(set_auth_block_number == 0, 'ANDREW: set auth in progress');
-        set_auth_block_number = current_block_number + SET_AUTH_WAIT;
+        set_auth_block_number = block.number + SET_AUTH_WAIT;
     }
 
     function executeByCommunity(uint nominateeIndex){
