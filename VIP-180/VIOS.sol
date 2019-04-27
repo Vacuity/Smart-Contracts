@@ -331,91 +331,26 @@ contract VIOS is ERC20Capped, ERC20Detailed {
      * @param value The amount of tokens to mint.
      * @return A boolean that indicates if the operation was successful.
      */
-    function claimTokens(uint256 value) public returns (bool) {
+    function withdrawFromEscrow(uint256 value) public returns (bool) {
         require(trustees.has(msg.sender), "VIOS: caller does not have trustee role");
         uint256 balance = TOKENS_PER_SECOND * (now - last_claim_timestamp);
-        require(value <= balance, "VIOS: claim exceeds balance");
+        require(value <= balance, "VIOS: claim exceeds escrow");
         super.mint(msg.sender, value);
         last_claim_timestamp = now;
         return true;
     }
+    
+    function withdrawEscrow() public returns (bool){
+        return withdrawFromEscrow(escrowBalance());
+    }
 
-    function availableTokens() public returns (uint256){
+    function escrowBalance() public returns (uint256){
         return TOKENS_PER_SECOND * (now - last_claim_timestamp);
     }
-
-    /**
-    * @dev Total number of tokens in existence
-    */
-    //function totalSupply() public view returns(uint256){
-    //    return _totalSupply;
-    //}
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public view returns(uint256){
-        return balances[_owner];
+    
+    function balance() public returns (uint256) {
+        return balanceOf(msg.sender);
     }
-    /**
-    * @dev Transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool){
-        require(_to != address(0), "VIOS: Zero address not allowed");
-        require(_value <= balances[msg.sender], "VIOS: insufficient funds");
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        //emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool){
-        require(_to != address(0), "VIOS: Zero address not allowed");
-        require(_value <= balances[_from], "VIOS: insufficient funds");
-        require(_value <= allowed[_from][msg.sender], "VIOS: not allowed by receiver");
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        //emit Transfer(_from, _to, _value);
-        return true;
-    }
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns(bool){
-        allowed[msg.sender][_spender] = _value;
-        //emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public view returns(uint256){
-        return allowed[_owner][_spender];
-    }
-
-
-    //event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    //event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     // ********* the ANDREW functions ***********//
     uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 1;
@@ -453,7 +388,7 @@ contract VIOS is ERC20Capped, ERC20Detailed {
     uint public set_auth_timestamp; 
 
     function setAuth(ATN newAuth) private {
-        require(auth.isSubscribed(msg.sender), 'ANDREW: sender is not Authority');
+        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
         require(newAuth.isSubscribed(msg.sender), 'ANDREW: destination Authority not found');
         auth = newAuth;
     }
@@ -506,7 +441,7 @@ contract VIOS is ERC20Capped, ERC20Detailed {
     }
 
     function close() public {
-        require(auth.isSubscribed(msg.sender), 'ANDREW: sender is not Authority');
+        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
         delete proposals;
         delete delegated;
         delete voted;
@@ -571,15 +506,15 @@ contract VIOS is ERC20Capped, ERC20Detailed {
     function authorize(uint nominateeIndex, uint yayOrNay) public {
         uint yay = proposals[nominateeIndex].yay;
         uint nay = proposals[nominateeIndex].nay;
-        require(auth.isSubscribed(msg.sender), 'ANDREW: sender is not Authority');
-        require (yayOrNay < 0 || yayOrNay > 1, 'ANDREW: invalid input'); 
+        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
+        require (yayOrNay == 0 || yayOrNay == 1, 'ANDREW: invalid input'); 
         if(yayOrNay == 1) proposals[nominateeIndex].authorizedYay = yay;
         else if(yayOrNay == 0) proposals[nominateeIndex].authorizedNay = nay;
         proposals[nominateeIndex].authorized = true;
     }
 
     function revokeAuthorize(uint nominateeIndex) public {
-        require(auth.isSubscribed(msg.sender), 'ANDREW: sender is not Authority');
+        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
         proposals[nominateeIndex].authorized = false;
         proposals[nominateeIndex].authorizedYay = 0;
         proposals[nominateeIndex].authorizedNay = 0;
@@ -595,8 +530,8 @@ contract VIOS is ERC20Capped, ERC20Detailed {
         require (getIndex(delegated, msg.sender) == -1, 'ANDREW: credits delegated');
         require (getIndex(voted, msg.sender) == -1, 'ANDREW: vote already cast');
         require (sender.status != BALLOT_STATUS_NONE, 'ANDREW: no ballot');
-        require (proposals[nominateeIndex].proposalType != proposalType, 'ANDREW: type not found'); // requiring 'type' ensures the sender is aware of the proposal type
-        require (yayOrNay < 0 || yayOrNay > 1, 'ANDREW: invalid input'); 
+        require (proposals[nominateeIndex].proposalType == proposalType, 'ANDREW: type not found'); // requiring 'type' ensures the sender is aware of the proposal type
+        require (yayOrNay == 0 || yayOrNay == 1, 'ANDREW: invalid input'); 
         if(yayOrNay == 1) proposals[nominateeIndex].yay += sender.credits;
         else if(yayOrNay == 0) proposals[nominateeIndex].nay += sender.credits;
         voted.push(msg.sender);

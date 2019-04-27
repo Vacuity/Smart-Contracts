@@ -3,17 +3,12 @@ pragma solidity ^0.5.0;
 import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC721/ERC721Full.sol';
 import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC721/ERC721Mintable.sol';
 import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC721/ERC721Burnable.sol';
-import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC721/ERC721Enumerable.sol';
 import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/ownership/Ownable.sol';
 import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/access/Roles.sol";
 
 contract ATN is ERC721Full, ERC721Mintable, ERC721Burnable, Ownable {
-    constructor(
-        string memory name,
-        string memory symbol
-    )
-        ERC721Full(name, symbol) 
-        Ownable()
+    constructor()
+        ERC721Full("Authority Node", "ATN") 
         public
     {
         uint256 id = uint256(keccak256(abi.encodePacked("http://vios.network/o/AuthorityNode")));
@@ -26,7 +21,7 @@ contract ATN is ERC721Full, ERC721Mintable, ERC721Burnable, Ownable {
     }
 
     function isSubscribed(address _owner) public returns (bool)  {
-        if (balanceOf(_owner) > 1) return true;
+        if (balanceOf(_owner) > 0) return true;
         return false;
     }   
 }
