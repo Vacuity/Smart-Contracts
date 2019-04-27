@@ -23,6 +23,7 @@ contract ATN is ERC721Full, ERC721Mintable, ERC721Burnable, Ownable {
         public
     {
         Roles.add(admin, msg.sender);
+        create(msg.sender, "http://vios.network/o/AuthorityNode", "http://vios.network/o/AuthorityNode");
     }
 
     function purchase(uint256 id) public payable {

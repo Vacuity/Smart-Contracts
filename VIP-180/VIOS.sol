@@ -48,8 +48,9 @@ contract VIOS is ERC20, ERC20Detailed {
         symbol = "VIOS";
         decimals = DECIMALS;
         SUPPLY_CAP = MAX_SUPPLY;
-        //auth = ATN(0xdC04977a2078C8FFDf086D618d1f961B6C546222);
-        _mint(msg.sender, INITIAL_SUPPLY);
+        auth = ATN(0x08970FEd061E7747CD9a38d680A601510CB659FB);
+        //_mint(msg.sender, INITIAL_SUPPLY);
+        last_claim_timestamp = now;
     }
 
     function isVIOSNetworkToken() public pure returns (bool) {
@@ -65,18 +66,21 @@ contract VIOS is ERC20, ERC20Detailed {
 
     /**
      * @dev Function to claim token balance
-     * @param to The address that will receive the minted tokens.
      * @param value The amount of tokens to mint.
      * @return A boolean that indicates if the operation was successful.
      */
-    function claimTokens(address to, uint256 value) public returns (bool) {
+    function claimTokens(uint256 value) public returns (bool) {
         require(trustees.has(msg.sender), "VIOS: sender does not have trustee role");
         require(totalSupply().add(value) <= SUPPLY_CAP, "VIOS: cap exceeded");
         uint256 balance = TOKENS_PER_SECOND * (now - last_claim_timestamp);
         require(value <= balance, "VIOS: claim exceeds balance");
+        _mint(msg.sender, value);
         last_claim_timestamp = now;
-        _mint(to, value);
         return true;
+    }
+    
+    function availableTokens() public returns (uint256){
+        return TOKENS_PER_SECOND * (now - last_claim_timestamp);
     }
 
     /**
@@ -205,8 +209,8 @@ contract VIOS is ERC20, ERC20Detailed {
     // Opens new poll for choosing one of the 'trustees' nominees
     function open(address[] memory trusteeNominees, uint[] memory proposalTypes, uint _majorityDivisor) public {
         require(auth.isSubscribed(msg.sender) || proposals.length == 0, 'ANDREW: poll in progress');
-        require(_majorityDivisor > 5, 'ANDREW: requires 20% participation or more');
-        require(_majorityDivisor < 2, 'ANDREW: requires 50% participation or less');
+        require(_majorityDivisor <= 5, 'ANDREW: requires 20% participation or more');
+        require(_majorityDivisor >= 2, 'ANDREW: requires 50% participation or less');
         require(trusteeNominees.length == proposalTypes.length, 'ANDREW: invalid proposal');
         // For every provided trustee, a new proposal object is created and added to the array's end.
         delete proposals;
@@ -216,7 +220,7 @@ contract VIOS is ERC20, ERC20Detailed {
         for (uint i = 0; i < trusteeNominees.length; i++) {
             // 'proposal({...})' will create a temporary proposal object 
             // 'proposals.push(...)' will append it to the end of 'proposals'.
-            require(proposals[i].proposalType == VOTE_PROPOSAL_REMOVE_TRUSTEE || proposals[i].proposalType == VOTE_PROPOSAL_ADD_TRUSTEE, 'ANDREW: invalid proposal');
+            require(proposalTypes[i] == VOTE_PROPOSAL_REMOVE_TRUSTEE || proposalTypes[i] == VOTE_PROPOSAL_ADD_TRUSTEE, 'ANDREW: invalid proposal');
             proposals.push(proposal({
                 trusteeNominee: trusteeNominees[i],
                 yay: 0,
@@ -230,7 +234,7 @@ contract VIOS is ERC20, ERC20Detailed {
     }
 
     function close() public {
-        require(auth.isSubscribed(msg.sender), 'ANDREW: denied by Authority');
+        require(auth.isSubscribed(msg.sender), 'ANDREW: sender is not Authority');
         delete proposals;
         delete delegated;
         delete voted;
@@ -244,7 +248,7 @@ contract VIOS is ERC20, ERC20Detailed {
             voters[msg.sender].status = BALLOT_STATUS_NONE;
         }
         else{
-            voter memory sender = voters[msg.sender];
+            voter storage sender = voters[msg.sender];
             require(sender.status != BALLOT_STATUS_ACTIVE, 'ANDREW: ballot already exists');
             sender.credits = balanceOf(msg.sender);
             sender.status = BALLOT_STATUS_ACTIVE;
