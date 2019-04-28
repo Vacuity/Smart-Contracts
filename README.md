@@ -1,4 +1,4 @@
 # andrew
 Asset, Node, and Digital Rewards Engine Whatchamacallit
 
-![alt text](https://docs.google.com/drawings/d/1cKvEFcbBnGS0QmyV0PVg0zDpJQcHCUpu_wcJwWojOqU)
+![alt text](https://docs.google.com/drawings/d/e/2PACX-1vTDVHeGDzBcW2gOgoj9BqclXmHudnYGF1FTRePd5GEziKtnDkxrA5A0EKfM7C0XQgPJc5e_Szx07UHD/pub?w=1463&h=1112)
