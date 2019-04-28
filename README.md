@@ -7,7 +7,7 @@ Nodes are rewarded based on the measured, economic utility of the good or servic
 * Metrics are collected for the assets
 * The asset creator allows their URIs to be tokenized by others
 
-A rewards engine divvies out rewards tokens to URI NFTs in proportion to the NFTs' measured performance. Usage is measured in most cases by sending service request through a proxy, e.g. the RUDI and PBR. Proof-of-Authority is used to determine who is allowed to publish metrics, while a DAO is used to determine which performers receive rewards and in what proportion.
+A rewards engine divvies out rewards tokens to URI NFTs in proportion to the NFTs' measured performance. Usage is measured in most cases by sending service request through a proxy, e.g. the RUDI and PBR. Proof-of-Authority is used to determine who is allowed to publish metrics. In A.N.D.R.E.W., a DAO is used to determine which performers receive rewards and in what proportion.
 
 There must be consensus about how the endowment is appropriated, that is, the rewards algorithm must be agreed upon by the reward providers. In the case of the A.N.D.R.E.W., the community is endowed with a supply of network tokens, thus the community is a rewards provider. The endowment is stored in a smart contract escrow account, and released to a group of trustees elected by the community. An Authority node holds the right to veto the community's decision to add or remove a trustee.
 
