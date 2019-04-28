@@ -205,22 +205,11 @@ contract Escrow is BasicToken, Trust {
         return _cap;
     }
 
-    modifier trusteesOnly() {
-        require(isTrustee(msg.sender), "Escrow: caller does not have the trustee role");
-        _;
-    }
-
-    modifier authorityOnly() {
-        require(getAuthority().isSubscribed(msg.sender), 'Escrow: caller is not Authority');
-        _;
-    }
-
     /**
-     * @dev Function to claim token balance
-     * @param value The amount of tokens to mint.
+     * @dev Function to claim escrow balance
      * @return A boolean that indicates if the operation was successful.
      */
-    function _withdrawEscrow() internal trusteesOnly returns (bool) {
+    function _withdrawEscrow() public trusteesOnly returns (bool) {
         uint256 _now = now;
         super._mint(msg.sender, TOKENS_PER_SECOND * (_now - last_claim_timestamp));
         last_claim_timestamp = _now;
@@ -244,7 +233,6 @@ contract DAO is Escrow {
         escrow = Escrow(_escrow);
     }
     */
-    // ********* the ANDREW functions ***********//
     uint public constant VOTE_PROPOSAL_ADD_TRUSTEE = 1;
     uint public constant VOTE_PROPOSAL_REMOVE_TRUSTEE = 2;
     uint public constant BALLOT_STATUS_NONE = 0;
@@ -282,6 +270,8 @@ contract DAO is Escrow {
     address[] public delegated;
     address[] public voted;    
     uint public proposal_fee;
+
+    // ********* the ANDREW functions ***********//
 
     function initialize(uint amount, uint8 _majorityDivisor) public authorityOnly {
         require(_majorityDivisor <= MAJORITY_DIVISOR_MAX, 'ANDREW: requires 20% participation or more');
@@ -475,7 +465,7 @@ contract DAO is Escrow {
 
 }
 
-contract RecoverableDAO is DAO {
+contract ResilientDAO is DAO {
     uint public constant  SET_AUTH_WAIT = 28800  * (10 ** uint256(DECIMALS)); // the Authority has 8 hours to revert the setAuth change
     uint public auth_timestamp; 
 
@@ -518,7 +508,7 @@ contract RecoverableDAO is DAO {
  * @title VIOS Network Token
  * @dev 
  */
-contract VIOS is RecoverableDAO {
+contract VIOS is ResilientDAO {
     string private _name = "VIOS Network Token";
     string private _symbol = "VIOS";
     uint8 private _decimals = DECIMALS;
