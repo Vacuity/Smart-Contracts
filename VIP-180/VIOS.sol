@@ -572,9 +572,11 @@ contract VIOS is Escrow, ERC20Detailed {
         if(proposalType == 1) proposals[nominateeIndex].authorizedYay = yay;
         else if(proposalType == 0) proposals[nominateeIndex].authorizedNay = nay;
         proposals[nominateeIndex].authorized = true;
-        _transfer(address(this), sponsorAddr, deposit); // refund the deposit
-        deposit = 0;
-        sponsorAddr = address(0);
+        if(deposit > 0){
+            _transfer(address(this), sponsorAddr, deposit); // refund the deposit
+            deposit = 0;
+            sponsorAddr = address(0);
+        }
     }
 
     function revokeAuthorize(uint nominateeIndex) public {
