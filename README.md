@@ -2,7 +2,7 @@
 Asset, Node, and Digital Rewards Engine Whatchamacallit
 
 ## Proof-of-Performance 
-Nodes are rewarded based on the measured, economic utility of the good or service represented by the node. The main characteristics of POP are:
+Nodes are rewarded based on the measured, economic utility of the good or service represented by the node. The main characteristics of PoP are:
 * Asset creators assign URIs to their assets
 * Metrics are collected for the assets
 * A communal resource pool is allocated
