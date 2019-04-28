@@ -13,11 +13,11 @@ The rewards algorithm must be agreed upon by the reward providers. In the case o
 
 ## The DAO
 
-The A.N.D.R.E.W. DAO model employs a democratic governance model, with representative aspects, and features a Proof-of-Authority monitor. Anyone can propose a trustee address, so long as they stake the amount of network tokens stipulated by the Authority node. Network tokens are staked to the token contract in exchange for voting credits in a 1-to-1 ratio. The Authority decides the quorum for an election, given as a percentage of the electorate (the circulating token supply).
+The A.N.D.R.E.W. employs a democratic governance model, with representative aspects, and features a Proof-of-Authority monitor. Anyone can propose a trustee address, so long as they stake the amount of network tokens stipulated by the Authority node. Network tokens are staked to the token contract in exchange for voting credits in a 1-to-1 ratio. The Authority decides the quorum for an election, given as a percentage of the electorate (the circulating token supply).
 
 A voter may delegate her credits to another voter. The delegation chain limit is 10.
 
-![alt text](https://docs.google.com/drawings/d/e/2PACX-1vTDVHeGDzBcW2gOgoj9BqclXmHudnYGF1FTRePd5GEziKtnDkxrA5A0EKfM7C0XQgPJc5e_Szx07UHD/pub?w=1463&h=1112)
+[![alt text](https://docs.google.com/drawings/d/e/2PACX-1vTDVHeGDzBcW2gOgoj9BqclXmHudnYGF1FTRePd5GEziKtnDkxrA5A0EKfM7C0XQgPJc5e_Szx07UHD/pub?w=1670&h=1113)](https://docs.google.com/drawings/d/1cKvEFcbBnGS0QmyV0PVg0zDpJQcHCUpu_wcJwWojOqU/edit?usp=sharing)
 
 ### Penalties
 
