@@ -202,20 +202,6 @@ contract ERC20 is IERC20 {
     }
 
     /**
-     * @dev Internal function that burns an amount of the token of a given
-     * account.
-     * @param account The account whose tokens will be burnt.
-     * @param value The amount that will be burnt.
-     */
-    function _burn(address account, uint256 value) internal {
-        require(account != address(0), "ERC20: burn from the zero address");
-
-        _totalSupply = _totalSupply.sub(value);
-        _balances[account] = _balances[account].sub(value);
-        //emit Transfer(account, address(0), value);
-    }
-
-    /**
      * @dev Approve an address to spend another addresses' tokens.
      * @param owner The address that owns the tokens.
      * @param spender The address that will spend the tokens.
@@ -227,19 +213,6 @@ contract ERC20 is IERC20 {
 
         _allowed[owner][spender] = value;
         //emit Approval(owner, spender, value);
-    }
-
-    /**
-     * @dev Internal function that burns an amount of the token of a given
-     * account, deducting from the sender's allowance for said account. Uses the
-     * internal burn function.
-     * Emits an Approval event (reflecting the reduced allowance).
-     * @param account The account whose tokens will be burnt.
-     * @param value The amount that will be burnt.
-     */
-    function _burnFrom(address account, uint256 value) internal {
-        _burn(account, value);
-        _approve(account, msg.sender, _allowed[account][msg.sender].sub(value));
     }
 }
 
@@ -325,10 +298,6 @@ contract VIOS is Escrow, ERC20Detailed {
 
     uint256 public last_claim_timestamp = 0;
 
-    //function getTrustees() public returns (Roles.Role memory){
-    //    return trustees;
-    //}
-
     mapping(address => uint256) balances;
     mapping (address => mapping (address => uint256)) internal allowed;
 
@@ -399,7 +368,7 @@ contract VIOS is Escrow, ERC20Detailed {
         bool authorized;
     }
 
-    uint public majorityDivisor = 2;
+    uint8 public majorityDivisor = 2;
 
     // A dynamically-sized array of 'proposal' structs.
     proposal[] public proposals;
@@ -415,9 +384,12 @@ contract VIOS is Escrow, ERC20Detailed {
     uint public auth_timestamp; 
     uint public proposal_fee;
 
-    function initialize(uint amount) public {
+    function initialize(uint amount, uint8 _majorityDivisor) public {
         require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
+        require(_majorityDivisor <= 5, 'ANDREW: requires 20% participation or more');
+        require(_majorityDivisor >= 2, 'ANDREW: requires 50% participation or less');
         proposal_fee = amount;
+        majorityDivisor = _majorityDivisor;
     }
 
     function setAuth(ATN newAuth) private {
@@ -427,7 +399,6 @@ contract VIOS is Escrow, ERC20Detailed {
     }
 
     function setAuthByCommunity(uint nominateeIndex) public {
-        // TODO: attach a high price so that this function does not get spammed
         require(isTrustee(msg.sender), "ANDREW: caller does not have trustee role");
         require(auth_timestamp == 0, 'ANDREW: set auth in progress');
         auth_timestamp = now + SET_AUTH_WAIT;
@@ -446,13 +417,11 @@ contract VIOS is Escrow, ERC20Detailed {
         }        
     }
 
-    // Opens new poll for choosing one of the 'trustees' nominees
-    function open(address[] memory trusteeNominees, uint[] memory proposalTypes, uint _majorityDivisor, uint amount) public {
+    // Opens new poll for choosing one of the trustee nominees
+    function open(address[] memory trusteeNominees, uint[] memory proposalTypes, uint amount) public {
         require(auth.isSubscribed(msg.sender) || proposals.length == 0, 'ANDREW: poll in progress');
         require(proposal_fee > 0, 'ANDREW: not accepting submissions');
         require(amount >= proposal_fee, 'ANDREW: insufficient amount');
-        require(_majorityDivisor <= 5, 'ANDREW: requires 20% participation or more');
-        require(_majorityDivisor >= 2, 'ANDREW: requires 50% participation or less');
         require(trusteeNominees.length == proposalTypes.length, 'ANDREW: invalid proposal');
 
         deposit = proposal_fee;
@@ -463,7 +432,6 @@ contract VIOS is Escrow, ERC20Detailed {
         delete proposals;
         delete delegated;
         delete voted;
-        majorityDivisor = _majorityDivisor;
         for (uint i = 0; i < trusteeNominees.length; i++) {
             // 'proposal({...})' will create a temporary proposal object 
             // 'proposals.push(...)' will append it to the end of 'proposals'.
@@ -505,7 +473,7 @@ contract VIOS is Escrow, ERC20Detailed {
         else{
             uint256 c = credits[msg.sender];
             if(c > 0){
-                credits[msg.sender] = 0;
+                credits[msg.sender] = 0; // remove voting rights
                 _transfer(address(this), msg.sender, c); // refund the leftover credits
             }
             voter storage sender = voters[msg.sender];
