@@ -209,7 +209,7 @@ contract Escrow is BasicToken, Trust {
      * @dev Function to claim escrow balance
      * @return A boolean that indicates if the operation was successful.
      */
-    function _withdrawEscrow() public trusteesOnly returns (bool) {
+    function withdrawEscrow() public trusteesOnly returns (bool) {
         uint256 _now = now;
         super._mint(msg.sender, TOKENS_PER_SECOND * (_now - last_claim_timestamp));
         last_claim_timestamp = _now;
@@ -294,7 +294,8 @@ contract DAO is Escrow {
     function open(address[] memory trusteeNominees, uint[] memory proposalTypes, uint amount) public {
         require(getAuthority().isSubscribed(msg.sender) || proposals.length == 0, 'ANDREW: poll in progress');
         require(proposal_fee > 0, 'ANDREW: not accepting submissions');
-        require(amount >= proposal_fee, 'ANDREW: insufficient amount');
+        require(proposal_fee <= balanceOf(msg.sender), 'ANDREW: insufficient funds');
+        require(amount >= proposal_fee, 'ANDREW: insufficient deposit');
         require(trusteeNominees.length == proposalTypes.length, 'ANDREW: invalid proposal');
 
         deposit = proposal_fee;
@@ -466,40 +467,19 @@ contract DAO is Escrow {
 }
 
 contract ResilientDAO is DAO {
-    uint public constant  SET_AUTH_WAIT = 28800  * (10 ** uint256(DECIMALS)); // the Authority has 8 hours to revert the setAuth change
-    uint public auth_timestamp; 
-
-    function setAuthority(IATN newAuthority) private authorityOnly{
-        require(newAuthority.isSubscribed(msg.sender), 'ANDREW: destination Authority not found');
-        authority = newAuthority;
+    IATN[] public failsafes;
+    function assignAuthority(IATN replacement, IATN[] memory _failsafes) public authorityOnly{
+        require(replacement.isSubscribed(msg.sender), 'ANDREW: destination Authority not found');
+        authority = replacement;
+        failsafes = _failsafes;
     }
 
-    function initializeByCommunity() public trusteesOnly{
-        require(auth_timestamp == 0, 'ANDREW: set auth in progress');
-        auth_timestamp = now + SET_AUTH_WAIT;
+    function assignFailSafeAuthority(uint256 index) public trusteesOnly{
+        authority = failsafes[index];
     }
     
-    function executeByCommunity(uint nominateeIndex) public trusteesOnly{
-        require(auth_timestamp > 0, 'ANDREW: denied by Community');
-        require(now >= auth_timestamp, 'ANDREW: set auth in progress');
-        require(SafeMath.add(proposals[nominateeIndex].authorizedYay, proposals[nominateeIndex].authorizedNay) >= SafeMath.div (totalSupply(), uint256(2)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay, 'ANDREW: denied by Community');
-        authority = IATN(proposals[nominateeIndex].trusteeNominee);
-        if(deposit > 0){
-            _transfer(address(this), sponsorAddr, deposit);
-            deposit = 0;
-        }
-        sponsorAddr = address(0);
-        delete proposals;
-        delete delegated;
-        delete voted;
-        majorityDivisor = 2;
-        proposal_fee = 0;
-        auth_timestamp = 0;
-    }
-    
-    function close() public {
-        super.close();
-        auth_timestamp = 0;
+    function addFailSafeAuthority(IATN failsafe) public authorityOnly{
+        failsafes.push(failsafe);
     }
 }
 
