@@ -4,7 +4,7 @@ pragma solidity ^0.5.0;
 //import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC20/ERC20Detailed.sol";
 import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/access/Roles.sol";
 import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/math/SafeMath.sol";
-import "./ATN.sol";
+import "./IATN.sol";
 
 
 interface IERC20 {
@@ -288,7 +288,7 @@ contract VIOS is Escrow, ERC20Detailed {
     /**
      * @dev The Authority Node is owned by a multisig wallet that requires 21 signatures. These signers are the Authority Nodes.
      */
-    ATN private auth = ATN(address(0)); // TODO: insert ATN address
+    IATN private authority = IATN(address(0)); // TODO: insert ATN address
 
     uint8 public constant DECIMALS = 18;
     uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(DECIMALS));
@@ -304,11 +304,11 @@ contract VIOS is Escrow, ERC20Detailed {
     /**
      * @dev Constructor that gives msg.sender all of existing tokens.
      */
-    constructor (address _auth) 
+    constructor (address _authority) 
     Escrow(MAX_SUPPLY) 
     ERC20Detailed("VIOS Network Token", "VIOS", DECIMALS) 
     public {
-        auth = ATN(_auth);
+        authority = IATN(_authority);
         super._mint(msg.sender, INITIAL_SUPPLY);
         _removeTrustee(msg.sender); // caller was added to trustees when trustee role was created 
         last_claim_timestamp = now;
@@ -385,20 +385,20 @@ contract VIOS is Escrow, ERC20Detailed {
     uint public proposal_fee;
 
     function initialize(uint amount, uint8 _majorityDivisor) public {
-        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
+        require(authority.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
         require(_majorityDivisor <= 5, 'ANDREW: requires 20% participation or more');
         require(_majorityDivisor >= 2, 'ANDREW: requires 50% participation or less');
         proposal_fee = amount;
         majorityDivisor = _majorityDivisor;
     }
 
-    function setAuth(ATN newAuth) private {
-        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
-        require(newAuth.isSubscribed(msg.sender), 'ANDREW: destination Authority not found');
-        auth = newAuth;
+    function setAuthority(IATN newAuthority) private {
+        require(authority.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
+        require(newAuthority.isSubscribed(msg.sender), 'ANDREW: destination Authority not found');
+        authority = newAuthority;
     }
 
-    function setAuthByCommunity(uint nominateeIndex) public {
+    function setAuthorityByCommunity() public {
         require(isTrustee(msg.sender), "ANDREW: caller does not have trustee role");
         require(auth_timestamp == 0, 'ANDREW: set auth in progress');
         auth_timestamp = now + SET_AUTH_WAIT;
@@ -406,19 +406,20 @@ contract VIOS is Escrow, ERC20Detailed {
     
     function executeByCommunity(uint nominateeIndex) public {
         require(isTrustee(proposals[nominateeIndex].trusteeNominee), "ANDREW: does not have trustee role");
+        require(auth_timestamp > 0, 'ANDREW: denied by Community');
         require(now >= auth_timestamp, 'ANDREW: set auth in progress');
         require(SafeMath.add(proposals[nominateeIndex].authorizedYay, proposals[nominateeIndex].authorizedNay) >= SafeMath.div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay, 'ANDREW: denied by Community');
-        auth = ATN(proposals[nominateeIndex].trusteeNominee);
+        authority = IATN(proposals[nominateeIndex].trusteeNominee);
         delete proposals;
         delete delegated;
         delete voted;
         majorityDivisor = 2;
-        auth_timestamp = 0;                
+        auth_timestamp = 0;
     }
 
     // Opens new poll for choosing one of the trustee nominees
     function open(address[] memory trusteeNominees, uint[] memory proposalTypes, uint amount) public {
-        require(auth.isSubscribed(msg.sender) || proposals.length == 0, 'ANDREW: poll in progress');
+        require(authority.isSubscribed(msg.sender) || proposals.length == 0, 'ANDREW: poll in progress');
         require(proposal_fee > 0, 'ANDREW: not accepting submissions');
         require(amount >= proposal_fee, 'ANDREW: insufficient amount');
         require(trusteeNominees.length == proposalTypes.length, 'ANDREW: invalid proposal');
@@ -448,7 +449,7 @@ contract VIOS is Escrow, ERC20Detailed {
     }
 
     function close() public {
-        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
+        require(authority.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
         if(deposit > 0){
             _transfer(address(this), msg.sender, deposit); // confiscate the deposit
         }
@@ -462,18 +463,18 @@ contract VIOS is Escrow, ERC20Detailed {
         proposal_fee = 0;
     }
     
-    function refundDeposit() public {
-        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
+    function releaseDeposit() public {/*
+        require(authority.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
         if(deposit > 0){
             _transfer(address(this), sponsorAddr, deposit);
             deposit = 0;
         }
-        sponsorAddr = address(0);
+        sponsorAddr = address(0);*/
     }
 
     function claimBallot(uint256 amount) public {
         require(proposals.length != 0, 'ANDREW: poll closed');
-        if(auth.isSubscribed(msg.sender)){
+        if(authority.isSubscribed(msg.sender)){
             // the Authority address is not allowed to vote
             // the auth can alternatively call doVote directly
             voters[msg.sender].status = BALLOT_STATUS_NONE;
@@ -495,18 +496,15 @@ contract VIOS is Escrow, ERC20Detailed {
     
     function claimCredits() public returns (bool){
         require(proposals.length == 0, 'ANDREW: poll in progress');
-        uint256 amount = credits[msg.sender];
-        if(amount > 0){
-            _transfer(address(this), msg.sender, amount);
-            delete credits[msg.sender];
-        }
+        _transfer(address(this), msg.sender, credits[msg.sender]);
+        delete credits[msg.sender];
     }
 
     /// Delegate votes to the voter 'delegateAddr'.
     function delegate(address delegateAddr) public {
         // assigns reference
         // The Authority address cannot delegate
-        require(!auth.isSubscribed(msg.sender), 'ANDREW: Authority not allowed');
+        require(!authority.isSubscribed(msg.sender), 'ANDREW: Authority not allowed');
         // Self-delegation is not allowed.
         require(delegateAddr != msg.sender, 'ANDREW: self-delegation not allowed');
         voter storage sender = voters[msg.sender];
@@ -546,7 +544,7 @@ contract VIOS is Escrow, ERC20Detailed {
     function authorize(uint nominateeIndex, uint proposalType) public {
         uint yay = proposals[nominateeIndex].yay;
         uint nay = proposals[nominateeIndex].nay;
-        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
+        require(authority.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
         require (proposalType == 0 || proposalType == 1, 'ANDREW: invalid input'); 
         if(proposalType == 1) proposals[nominateeIndex].authorizedYay = yay;
         else if(proposalType == 0) proposals[nominateeIndex].authorizedNay = nay;
@@ -559,7 +557,7 @@ contract VIOS is Escrow, ERC20Detailed {
     }
 
     function revokeAuthorize(uint nominateeIndex) public {
-        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
+        require(authority.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
         proposals[nominateeIndex].authorized = false;
         proposals[nominateeIndex].authorizedYay = 0;
         proposals[nominateeIndex].authorizedNay = 0;
@@ -584,9 +582,7 @@ contract VIOS is Escrow, ERC20Detailed {
     }
 
     /// @dev Attempts to assign the trustee
-    function execute(uint nominateeIndex) public 
-            returns (bool)
-    {
+    function execute(uint nominateeIndex) public {
         require(proposals[nominateeIndex].authorized, 'ANDREW: denied by Authority');
         uint total = proposals[nominateeIndex].authorizedYay;
         total += proposals[nominateeIndex].authorizedNay;
@@ -598,8 +594,6 @@ contract VIOS is Escrow, ERC20Detailed {
         else if(proposals[nominateeIndex].proposalType == VOTE_PROPOSAL_REMOVE_TRUSTEE) {
             _removeTrustee(proposals[nominateeIndex].trusteeNominee);                
         }
-        delete proposals[nominateeIndex];
-        return true;
     }
 
     function getIndex(address[] memory addrs, address ele) internal returns (int) {

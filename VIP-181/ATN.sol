@@ -5,8 +5,9 @@ import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/mas
 import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC721/ERC721Burnable.sol';
 import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/ownership/Ownable.sol';
 import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/access/Roles.sol";
+import "./IATN.sol";
 
-contract ATN is ERC721Full, ERC721Mintable, ERC721Burnable, Ownable {
+contract ATN is IATN, ERC721Full, ERC721Mintable, ERC721Burnable, Ownable {
     constructor()
         ERC721Full("Authority Node", "ATN") 
         public
