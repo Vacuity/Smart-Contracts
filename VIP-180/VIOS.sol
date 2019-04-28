@@ -467,19 +467,16 @@ contract DAO is Escrow {
 }
 
 contract ResilientDAO is DAO {
-    IATN[] public failsafes;
-    function assignAuthority(IATN replacement, IATN[] memory _failsafes) public authorityOnly{
-        require(replacement.isSubscribed(msg.sender), 'ANDREW: destination Authority not found');
-        authority = replacement;
+    IATN[] private failsafes;
+    function addFailSaftAuthorities(IATN[] memory _failsafes) public authorityOnly{
+        require(failsafes.length <= 0, 'ResilientDAO: failsafes already initialized');
+        require(_failsafes.length >= 33, 'ResilientDAO: too few failsafes');
         failsafes = _failsafes;
     }
 
     function assignFailSafeAuthority(uint256 index) public trusteesOnly{
+        require(index >= 0 && index < failsafes.length, 'ResilientDAO: index not found');
         authority = failsafes[index];
-    }
-    
-    function addFailSafeAuthority(IATN failsafe) public authorityOnly{
-        failsafes.push(failsafe);
     }
 }
 

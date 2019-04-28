@@ -7,9 +7,9 @@ import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/mas
 import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/access/Roles.sol";
 import "./IATN.sol";
 
-contract ATN is IATN, ERC721Full, ERC721Mintable, ERC721Burnable, Ownable {
+contract ATN is IATN, ERC721, ERC721Metadata, ERC721Mintable, ERC721Burnable, Ownable {
     constructor()
-        ERC721Full("Authority Node", "ATN") 
+        ERC721Metadata("Authority Node", "ATN") 
         public
     {
         uint256 id = uint256(keccak256(abi.encodePacked("http://vios.network/o/AuthorityNode")));
