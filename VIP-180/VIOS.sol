@@ -468,7 +468,8 @@ contract DAO is Escrow {
 
 contract ResilientDAO is DAO {
     IATN[] private failsafes;
-    function addFailSaftAuthorities(IATN[] memory _failsafes) public authorityOnly{
+    // TODO: move this code to the constructor prior to deployment
+    function addFailSafeAuthorities(IATN[] memory _failsafes) public authorityOnly{
         require(failsafes.length <= 0, 'ResilientDAO: failsafes already initialized');
         require(_failsafes.length >= 33, 'ResilientDAO: too few failsafes');
         failsafes = _failsafes;
