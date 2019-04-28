@@ -407,14 +407,13 @@ contract VIOS is Escrow, ERC20Detailed {
     function executeByCommunity(uint nominateeIndex) public {
         require(isTrustee(proposals[nominateeIndex].trusteeNominee), "ANDREW: does not have trustee role");
         require(now >= auth_timestamp, 'ANDREW: set auth in progress');
-        if(SafeMath.add(proposals[nominateeIndex].authorizedYay, proposals[nominateeIndex].authorizedNay) >= SafeMath.div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay){
-            auth = ATN(proposals[nominateeIndex].trusteeNominee);
-            delete proposals;
-            delete delegated;
-            delete voted;
-            majorityDivisor = 2;
-            auth_timestamp = 0;
-        }        
+        require(SafeMath.add(proposals[nominateeIndex].authorizedYay, proposals[nominateeIndex].authorizedNay) >= SafeMath.div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay, 'ANDREW: denied by Community');
+        auth = ATN(proposals[nominateeIndex].trusteeNominee);
+        delete proposals;
+        delete delegated;
+        delete voted;
+        majorityDivisor = 2;
+        auth_timestamp = 0;                
     }
 
     // Opens new poll for choosing one of the trustee nominees
@@ -462,6 +461,15 @@ contract VIOS is Escrow, ERC20Detailed {
         auth_timestamp = 0;
         proposal_fee = 0;
     }
+    
+    function refundDeposit() public {
+        require(auth.isSubscribed(msg.sender), 'ANDREW: caller is not Authority');
+        if(deposit > 0){
+            _transfer(address(this), sponsorAddr, deposit);
+            deposit = 0;
+        }
+        sponsorAddr = address(0);
+    }
 
     function claimBallot(uint256 amount) public {
         require(proposals.length != 0, 'ANDREW: poll closed');
@@ -487,8 +495,11 @@ contract VIOS is Escrow, ERC20Detailed {
     
     function claimCredits() public returns (bool){
         require(proposals.length == 0, 'ANDREW: poll in progress');
-        _transfer(address(this), msg.sender, credits[msg.sender]);
-        delete credits[msg.sender];
+        uint256 amount = credits[msg.sender];
+        if(amount > 0){
+            _transfer(address(this), msg.sender, amount);
+            delete credits[msg.sender];
+        }
     }
 
     /// Delegate votes to the voter 'delegateAddr'.
@@ -579,18 +590,16 @@ contract VIOS is Escrow, ERC20Detailed {
         require(proposals[nominateeIndex].authorized, 'ANDREW: denied by Authority');
         uint total = proposals[nominateeIndex].authorizedYay;
         total += proposals[nominateeIndex].authorizedNay;
-        if(total >= SafeMath.div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay){
-            if(proposals[nominateeIndex].proposalType == VOTE_PROPOSAL_ADD_TRUSTEE){
-                require(proposals[nominateeIndex].trusteeNominee != address(0), 'ANDREW: zero address not allowed');
-                _addTrustee(proposals[nominateeIndex].trusteeNominee);
-            }
-            else if(proposals[nominateeIndex].proposalType == VOTE_PROPOSAL_REMOVE_TRUSTEE) {
-                _removeTrustee(proposals[nominateeIndex].trusteeNominee);                
-            }
-            delete proposals[nominateeIndex];
-            return true;
+        require(total >= SafeMath.div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay, 'ANDREW: denied by Community');
+        if(proposals[nominateeIndex].proposalType == VOTE_PROPOSAL_ADD_TRUSTEE){
+            require(proposals[nominateeIndex].trusteeNominee != address(0), 'ANDREW: zero address not allowed');
+            _addTrustee(proposals[nominateeIndex].trusteeNominee);
         }
-        return false;
+        else if(proposals[nominateeIndex].proposalType == VOTE_PROPOSAL_REMOVE_TRUSTEE) {
+            _removeTrustee(proposals[nominateeIndex].trusteeNominee);                
+        }
+        delete proposals[nominateeIndex];
+        return true;
     }
 
     function getIndex(address[] memory addrs, address ele) internal returns (int) {
