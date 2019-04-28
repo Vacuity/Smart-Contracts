@@ -220,16 +220,11 @@ contract Escrow is BasicToken, Trust {
      * @param value The amount of tokens to mint.
      * @return A boolean that indicates if the operation was successful.
      */
-    function withdrawFromEscrow(uint256 value) public trusteesOnly returns (bool) {
-        uint256 balance = TOKENS_PER_SECOND * (now - last_claim_timestamp);
-        require(value <= balance, "Escrow: claim exceeds escrow");
-        super._mint(msg.sender, value);
-        last_claim_timestamp = now;
+    function _withdrawEscrow() internal trusteesOnly returns (bool) {
+        uint256 _now = now;
+        super._mint(msg.sender, TOKENS_PER_SECOND * (_now - last_claim_timestamp));
+        last_claim_timestamp = _now;
         return true;
-    }
-    
-    function withdrawEscrow() public trusteesOnly returns (bool){
-        return withdrawFromEscrow(escrowBalance());
     }
 
     function escrowBalance() public returns (uint256){
