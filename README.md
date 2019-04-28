@@ -17,7 +17,7 @@ The A.N.D.R.E.W. employs a democratic governance model, with representative aspe
 
 A voter may delegate her credits to another voter. The delegation chain limit is 10.
 
-[![alt text](https://docs.google.com/drawings/d/1cKvEFcbBnGS0QmyV0PVg0zDpJQcHCUpu_wcJwWojOqU/edit?usp=sharing)
+[![alt text](https://docs.google.com/drawings/d/e/2PACX-1vTDVHeGDzBcW2gOgoj9BqclXmHudnYGF1FTRePd5GEziKtnDkxrA5A0EKfM7C0XQgPJc5e_Szx07UHD/pub?w=1670&h=1113)](https://docs.google.com/drawings/d/1cKvEFcbBnGS0QmyV0PVg0zDpJQcHCUpu_wcJwWojOqU/edit?usp=sharing)
 
 ### Penalties
 
