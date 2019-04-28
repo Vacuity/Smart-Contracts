@@ -485,7 +485,7 @@ contract ResilientDAO is DAO {
         require(SafeMath.add(proposals[nominateeIndex].authorizedYay, proposals[nominateeIndex].authorizedNay) >= SafeMath.div (totalSupply(), uint256(2)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay, 'ANDREW: denied by Community');
         authority = IATN(proposals[nominateeIndex].trusteeNominee);
         if(deposit > 0){
-            transfer(sponsorAddr, deposit);
+            _transfer(address(this), sponsorAddr, deposit);
             deposit = 0;
         }
         sponsorAddr = address(0);
