@@ -40,3 +40,22 @@ c. No action should be taken by the community
 Each answer corresponds to a blockchain address, thus, the options may identify persons or organizations, or may be used as identifiers for subjects or other types of individuals. The answer's ```action_type``` determines what happens when the decision is executed by the contract. For action types ```1``` and ```0```, the address is assigned as trustee, or relieved of trustee duty, respectively. When voters cast their ballots, they may submit a boolean value to assign to one choice, per address. Thus, a voter may make a decision on multiple choices, or decide on a single choice multiple times, so long as they use multiple addresses each time when claiming their ballot.
 
 In the case of trustees, if a nominee receives more yay's than nay's, they are given trusteeship. In all other cases, the interpretation and execution of the election results must be handled off-chain.
+
+### Authority
+
+The role of the Authority node is to initialize polls and authorize community decisions. They serve as a control against malicious, unacceptable, or invalid proposals being executed. The Authority is not elected, but is instead a multisig wallet address appointed by the DAO initiator. When the token is deployed, a list of failsafe Authority addresses must be submitted. At anytime during the token distribution, a trustee can replace the current Authority with any of the failsafes. The failsafe list is immutable.
+
+### Trustee
+
+In the A.N.D.R.E.W. design, a trustee is intended to be a smart contract with logic for rewarding the IDN categories under its purview. These contracts must coordinate their withdraws in accordance with rules agreed upon by the community. The community is also responsible for passing the specifications to which trustees must adhere. Below are a few examples:
+
+* The contract must be a token dispensary with withdraw permissions given to IDN owners and/or trustees of an escrow within the dispensary
+* The amount each IDN owner is allowed to withdraw is equal to the earnings of the IDN since the last withdrawal, or if trustees are assigned, then the trustee may withdraw the balance of the contract's escrow
+* The contract must withdraw from the parent escrow at a schedule stipulated by the parent escrow's guild (this term is not captured in the root escrow's contract)
+* The contract must allow for voting by those who hold IDNs under the escrow's purview
+* The contract must self destruct if the destroy function is invoked by an anonymous caller and no poll is active and the contract is not a trustee
+
+In this way, guilds can be formed to manage the sub-appropriation of the community's endowment.
+
+
+
