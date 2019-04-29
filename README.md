@@ -13,7 +13,7 @@ The rewards algorithm must be agreed upon by the reward providers. In the case o
 
 ## The DAO
 
-The A.N.D.R.E.W. employs a democratic governance model, with representative aspects, and features a Proof-of-Authority monitor. Anyone can propose a trustee address, so long as they stake the amount of network tokens stipulated by the Authority node. Network tokens are staked to the token contract in exchange for voting credits in a 1-to-1 ratio. The Authority decides the quorum for an election, given as a percentage of the electorate (the circulating token supply).
+The A.N.D.R.E.W. employs a [democratic governance model, with representative aspects](https://medium.com/organizer-sandbox/liquid-democracy-true-democracy-for-the-21st-century-7c66f5e53b6f), and features a Proof-of-Authority monitor. Anyone can propose a trustee address, so long as they stake the amount of network tokens stipulated by the Authority node. Network tokens are staked to the token contract in exchange for voting credits in a 1-to-1 ratio. The Authority decides the quorum for an election, given as a percentage of the electorate (the circulating token supply).
 
 A voter may delegate her credits to another voter. The delegation chain limit is 10.
 
