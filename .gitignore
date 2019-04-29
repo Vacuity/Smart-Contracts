@@ -3,3 +3,12 @@ VIP-180/interface/.DS_Store
 VIP-181/.DS_Store
 VIP-181/.DS_Store
 VIP-181/.DS_Store
+.DS_Store
+contracts/.DS_Store
+migrations/3_deploy_contracts.js
+migrations/4_deploy_contracts.js
+migrations/5_deploy_contracts.js
+test/.placeholder
+test/metacoin.js
+test/TestMetacoin.sol
+truffle-config.js
