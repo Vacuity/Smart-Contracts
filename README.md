@@ -33,7 +33,7 @@ Each ballot represents a question and a list of possible answers, where each ans
 How should the Science IDN issue be addressed?
 
 a. Refunds should be issued from the Science Guild's trust
-b. IDNs should be minted and distributed to the complaintants free-of-charge
+b. IDNs should be minted and distributed to the complainants free-of-charge
 c. No action should be taken by the community
 ```
 
