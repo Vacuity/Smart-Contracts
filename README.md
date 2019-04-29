@@ -25,7 +25,7 @@ The Authority must authorize the election before the decision can be executed. I
 
 ### Ballot
 
-Each user is allowed to claim one ballot per account, and must stake tokens to receive the corresponding number of vote credits. When these credits are delegated to users of high reputation, the voter receives reputation points in proportion to the reputation of the delegate (but these terms are not captured in the DAO contract). 
+Each user is allowed to claim one ballot per account, and must stake tokens to receive the corresponding number of vote credits. When these credits are delegated to users of high reputation, the voter receives reputation points in proportion to the reputation of the delegate (but these terms are not captured in the DAO contract). Reputation can then be used to infuse the member's IDNs with enhanced characteristics (e.g. reward-earning power).
 
 Each ballot represents a question and a list of possible answers, where each answer is associated with a binary response. E.g.
 
