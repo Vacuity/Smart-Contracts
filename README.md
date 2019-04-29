@@ -23,8 +23,6 @@ A voter may delegate her credits to another voter. The delegation chain limit is
 
 The Authority must authorize the election before the decision can be executed. If the Authority closes an unauthorized election, the sponsor's deposit is confiscated by the Authority to dispense with it as they choose. Otherwise, the sponsor's deposit is refunded. Voters may claim their deposited tokens only after the election has been closed.
 
-In the A.N.D.R.E.W., penalties are not used to 
-
 ### Ballot
 
 Each user is allowed to claim one ballot per account, and must stake tokens to receive the corresponding number of vote credits. When these credits are delegated to users of high reputation, the voter receives reputation points in proportion to the reputation of the delegate (but these terms are not captured in the DAO contract). Furthermore, the delegate receives reputation points if they option they choose goes on to win the election. Reputation can then be used to infuse the member's IDNs with enhanced characteristics (e.g. reward-earning power). This feature is meant to balance power between the plutocrats and meritocrats. Plutocrats will require the merit and reputation of the community's most devoted and active members if they wish to maximize their earnings, and delegates will need to be responsive to their constituiency if they wish to continue being delegated.
