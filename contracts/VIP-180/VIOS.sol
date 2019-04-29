@@ -536,4 +536,4 @@ contract VIOS is ResilientDAO {
     function balance() public returns (uint256) {
         return balanceOf(msg.sender);
     }
-}}
+}
