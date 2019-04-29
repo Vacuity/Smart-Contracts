@@ -13,7 +13,7 @@ The rewards algorithm must be agreed upon by the reward providers. In the case o
 
 ## The DAO
 
-The A.N.D.R.E.W. employs a democratic governance model, with representative aspects, and features a Proof-of-Authority monitor. Anyone can propose a trustee address, so long as they stake the amount of network tokens stipulated by the Authority node. Network tokens are staked to the token contract in exchange for voting credits in a 1-to-1 ratio. The Authority decides the quorum for an election, given as a percentage of the electorate (the circulating token supply).
+The A.N.D.R.E.W. employs a [democratic governance model, with representative aspects](https://medium.com/organizer-sandbox/liquid-democracy-true-democracy-for-the-21st-century-7c66f5e53b6f), and features a Proof-of-Authority monitor. Anyone can propose a trustee address, so long as they stake the amount of network tokens stipulated by the Authority node. Network tokens are staked to the token contract in exchange for voting credits in a 1-to-1 ratio. The Authority decides the quorum for an election, given as a percentage of the electorate (the circulating token supply).
 
 A voter may delegate her credits to another voter. The delegation chain limit is 10.
 
@@ -25,7 +25,7 @@ The Authority must authorize the election before the decision can be executed. I
 
 ### Ballot
 
-Each user is allowed to claim one ballot per account, and must stake tokens to receive the corresponding number of vote credits. When these credits are delegated to users of high reputation, the voter receives reputation points in proportion to the reputation of the delegate (but these terms are not captured in the DAO contract). 
+Each user is allowed to claim one ballot per account, and must stake tokens to receive the corresponding number of vote credits. When these credits are delegated to users of high reputation, the voter receives reputation points in proportion to the reputation of the delegate (but these terms are not captured in the DAO contract). Furthermore, the delegate receives reputation points if they option they choose goes on to win the election. Reputation can then be used to infuse the member's IDNs with enhanced characteristics (e.g. reward-earning power). This feature is meant to balance power between the plutocrats and meritocrats. The DAO's plutocrats will require the merit and reputation of the community's most devoted and active members if they wish to maximize their earnings, and delegates will need to be responsive to their constituiency if they wish to continue being delegated.
 
 Each ballot represents a question and a list of possible answers, where each answer is associated with a binary response. E.g.
 
@@ -37,4 +37,6 @@ b. IDNs should be minted and distributed to the complainants free-of-charge
 c. No action should be taken by the community
 ```
 
-Each answer corresponds to a blockchain address, thus, the options may represent persons or organizations. The answer's ```type``` determines what happens when the decision is executed by the contract. For types ```1``` and ```0```, the address is assigned as trustee, or relieved of trustee duty, respectively. When voters cast their ballots, they may submit a boolean value to assign to one choice, per address. Thus, a voter may make a decision on multiple choices, or decide on a single choice multiple times, so long as they use multiple addresses each time when claiming their ballot.
+Each answer corresponds to a blockchain address, thus, the options may represent persons or organizations. The answer's ```action_type``` determines what happens when the decision is executed by the contract. For action types ```1``` and ```0```, the address is assigned as trustee, or relieved of trustee duty, respectively. When voters cast their ballots, they may submit a boolean value to assign to one choice, per address. Thus, a voter may make a decision on multiple choices, or decide on a single choice multiple times, so long as they use multiple addresses each time when claiming their ballot.
+
+In the case of trustees, if a nominee receives more yay's than nay's, they are given trusteeship. In all other cases, the interpretation and execution of the election results must be handled off-chain.
