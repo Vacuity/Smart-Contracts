@@ -290,12 +290,12 @@ contract DAO is Escrow {
     }
     
     // Opens new poll for choosing one of the trustee nominees
-    function open(address[] memory trusteeNominees, uint[] memory proposalTypes, uint amount) public {
+    function open(address[] memory trusteeNominees, uint[] memory actionTypes, uint amount) public {
         require(getAuthority().isSubscribed(msg.sender) || proposals.length == 0, 'ANDREW: poll in progress');
         require(proposal_fee > 0, 'ANDREW: not accepting submissions');
         require(proposal_fee <= balanceOf(msg.sender), 'ANDREW: insufficient funds');
         require(amount >= proposal_fee, 'ANDREW: insufficient deposit');
-        require(trusteeNominees.length == proposalTypes.length, 'ANDREW: invalid proposal');
+        require(trusteeNominees.length == actionTypes.length, 'ANDREW: invalid proposal');
 
         deposit = proposal_fee;
         _transfer(msg.sender, address(this), proposal_fee);
@@ -308,12 +308,12 @@ contract DAO is Escrow {
         for (uint i = 0; i < trusteeNominees.length; i++) {
             // 'proposal({...})' will create a temporary proposal object 
             // 'proposals.push(...)' will append it to the end of 'proposals'.
-            require(proposalTypes[i] == VOTE_PROPOSAL_REMOVE_TRUSTEE || proposalTypes[i] == VOTE_PROPOSAL_ADD_TRUSTEE, 'ANDREW: invalid proposal');
+            require(actionTypes[i] == VOTE_PROPOSAL_REMOVE_TRUSTEE || actionTypes[i] == VOTE_PROPOSAL_ADD_TRUSTEE, 'ANDREW: invalid proposal');
             proposals.push(proposal({
                 trusteeNominee: trusteeNominees[i],
                 yay: 0,
                 nay: 0,
-                actionType: proposalTypes[i],
+                actionType: actionTypes[i],
                 authorizedYay: 0,
                 authorizedNay: 0,
                 authorized: false
@@ -403,12 +403,12 @@ contract DAO is Escrow {
         delete voters[msg.sender];
     }
 
-    function authorize(uint nominateeIndex, uint proposalType) public authorityOnly{
+    function authorize(uint nominateeIndex, uint actionType) public authorityOnly{
         uint yay = proposals[nominateeIndex].yay;
         uint nay = proposals[nominateeIndex].nay;
-        require (proposalType == 0 || proposalType == 1, 'ANDREW: invalid input'); 
-        if(proposalType == 1) proposals[nominateeIndex].authorizedYay = yay;
-        else if(proposalType == 0) proposals[nominateeIndex].authorizedNay = nay;
+        require (actionType == 0 || actionType == 1, 'ANDREW: invalid input'); 
+        if(actionType == 1) proposals[nominateeIndex].authorizedYay = yay;
+        else if(actionType == 0) proposals[nominateeIndex].authorizedNay = nay;
         proposals[nominateeIndex].authorized = true;
         if(deposit > 0){
             _transfer(address(this), sponsorAddr, deposit); // refund the deposit
