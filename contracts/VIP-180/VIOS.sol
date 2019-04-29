@@ -247,7 +247,7 @@ contract DAO is Escrow {
         address trusteeNominee;
         uint yay; // the number of positive votes accumulated
         uint nay; // the number of negative votes accumulated
-        uint proposalType;
+        uint actionType;
         uint authorizedYay;
         uint authorizedNay;
         bool authorized;
@@ -313,7 +313,7 @@ contract DAO is Escrow {
                 trusteeNominee: trusteeNominees[i],
                 yay: 0,
                 nay: 0,
-                proposalType: proposalTypes[i],
+                actionType: proposalTypes[i],
                 authorizedYay: 0,
                 authorizedNay: 0,
                 authorized: false
@@ -424,7 +424,7 @@ contract DAO is Escrow {
     }
 
     /// Cast a vote or veto (including votes delegated to you) for nominatedTrustee
-    function vote(uint nominateeIndex, uint yayOrNay, uint proposalType) public {
+    function vote(uint nominateeIndex, uint yayOrNay, uint actionType) public {
         // If 'voter' or 'nominatedTrustee' are out of the range of the array,
         // this will throw automatically and revert all
         // changes.
@@ -433,7 +433,7 @@ contract DAO is Escrow {
         require (getIndex(delegated, msg.sender) == -1, 'ANDREW: credits delegated');
         require (getIndex(voted, msg.sender) == -1, 'ANDREW: vote already cast');
         require (sender.status != BALLOT_STATUS_NONE, 'ANDREW: no ballot');
-        require (proposals[nominateeIndex].proposalType == proposalType, 'ANDREW: type not found'); // requiring 'type' ensures the sender is aware of the proposal type
+        require (proposals[nominateeIndex].actionType == actionType, 'ANDREW: type not found'); // requiring 'type' ensures the sender is aware of the proposal type
         require (yayOrNay == 0 || yayOrNay == 1, 'ANDREW: invalid input'); 
         if(yayOrNay == 1) proposals[nominateeIndex].yay += credits[msg.sender];
         else if(yayOrNay == 0) proposals[nominateeIndex].nay += credits[msg.sender];
@@ -447,11 +447,11 @@ contract DAO is Escrow {
         uint total = proposals[nominateeIndex].authorizedYay;
         total += proposals[nominateeIndex].authorizedNay;
         require(total >= SafeMath.div (totalSupply(), uint256(majorityDivisor)) && proposals[nominateeIndex].authorizedYay > proposals[nominateeIndex].authorizedNay, 'ANDREW: denied by Community');
-        if(proposals[nominateeIndex].proposalType == VOTE_PROPOSAL_ADD_TRUSTEE){
+        if(proposals[nominateeIndex].actionType == VOTE_PROPOSAL_ADD_TRUSTEE){
             require(proposals[nominateeIndex].trusteeNominee != address(0), 'ANDREW: zero address not allowed');
             _addTrustee(proposals[nominateeIndex].trusteeNominee);
         }
-        else if(proposals[nominateeIndex].proposalType == VOTE_PROPOSAL_REMOVE_TRUSTEE) {
+        else if(proposals[nominateeIndex].actionType == VOTE_PROPOSAL_REMOVE_TRUSTEE) {
             _removeTrustee(proposals[nominateeIndex].trusteeNominee);                
         }
     }
@@ -536,4 +536,4 @@ contract VIOS is ResilientDAO {
     function balance() public returns (uint256) {
         return balanceOf(msg.sender);
     }
-}
+}}
