@@ -1,8 +1,8 @@
-import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/access/Roles.sol";
 pragma solidity ^0.5.0;
 
-import "./ITrust.sol";
-import "./IATN.sol";
+import "/Users/shermanmonroe/Documents/GitHub/andrew/openzeppelin-solidity/contracts/access/Roles.sol";
+import "./interface/ITrust.sol";
+import "../VIP-181/interface/IATN.sol";
 
 contract Trust is ITrust {
 
@@ -17,7 +17,16 @@ contract Trust is ITrust {
     event TrusteeRemoved(address indexed account);
 
     Roles.Role private _trustees;
-    address[] keys;
+
+    modifier trusteesOnly() {
+        require(isTrustee(msg.sender), "Escrow: caller does not have the trustee role");
+        _;
+    }
+
+    modifier authorityOnly() {
+        require(getAuthority().isSubscribed(msg.sender), 'Escrow: caller is not Authority');
+        _;
+    }
 
     constructor () internal {
         _addTrustee(msg.sender);
@@ -46,3 +55,4 @@ contract Trust is ITrust {
         emit TrusteeRemoved(account);
     }
 }
+

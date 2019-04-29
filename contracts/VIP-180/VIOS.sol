@@ -2,10 +2,9 @@ pragma solidity ^0.5.0;
 
 //import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC20/ERC20Capped.sol";
 //import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC20/ERC20Detailed.sol";
-import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/math/SafeMath.sol";
-import "./IATN.sol";
+import "/Users/shermanmonroe/Documents/GitHub/andrew/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../VIP-181/interface/IATN.sol";
 import "./Trust.sol";
-
 
 interface IERC20 {
     function transfer(address to, uint256 value) external returns (bool);
@@ -359,7 +358,7 @@ contract DAO is Escrow {
     
     function claimCredits() public returns (bool){
         require(proposals.length == 0, 'ANDREW: poll in progress');
-        transfer(msg.sender, credits[msg.sender]);
+        _transfer(address(this), msg.sender, credits[msg.sender]);
         delete credits[msg.sender];
     }
 

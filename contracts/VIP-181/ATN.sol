@@ -1,11 +1,11 @@
 pragma solidity ^0.5.0;
 
-import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC721/ERC721Full.sol';
-import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC721/ERC721Mintable.sol';
-import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/token/ERC721/ERC721Burnable.sol';
-import 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/ownership/Ownable.sol';
-import "https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-solidity/master/contracts/access/Roles.sol";
-import "./IATN.sol";
+import '/Users/shermanmonroe/Documents/GitHub/andrew/openzeppelin-solidity/contracts/token/ERC721/ERC721Full.sol';
+import '/Users/shermanmonroe/Documents/GitHub/andrew/openzeppelin-solidity/contracts/token/ERC721/ERC721Mintable.sol';
+import '/Users/shermanmonroe/Documents/GitHub/andrew/openzeppelin-solidity/contracts/token/ERC721/ERC721Burnable.sol';
+import '/Users/shermanmonroe/Documents/GitHub/andrew/openzeppelin-solidity/contracts/ownership/Ownable.sol';
+import "/Users/shermanmonroe/Documents/GitHub/andrew/openzeppelin-solidity/contracts/access/Roles.sol";
+import "./interface/IATN.sol";
 
 contract ATN is IATN, ERC721, ERC721Metadata, ERC721Mintable, ERC721Burnable, Ownable {
     constructor()

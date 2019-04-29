@@ -1,0 +1,501 @@
+{
+  "contractName": "ITrust",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "isTrustee",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "renounceTrust",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "getAuthority",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "metadata": "",
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "pragma solidity ^0.5.0;\nimport \"../../VIP-181/interface/IATN.sol\";\n\ninterface ITrust {\n    function isTrustee(address account) external view returns (bool) ;\n\n    function renounceTrust() external ;\n    \n    function getAuthority() external returns (IATN);\n}\n",
+  "sourcePath": "/Users/shermanmonroe/Documents/GitHub/andrew/andrew/contracts/VIP-180/interface/ITrust.sol",
+  "ast": {
+    "absolutePath": "/Users/shermanmonroe/Documents/GitHub/andrew/andrew/contracts/VIP-180/interface/ITrust.sol",
+    "exportedSymbols": {
+      "ITrust": [
+        1793
+      ]
+    },
+    "id": 1794,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1776,
+        "literals": [
+          "solidity",
+          "^",
+          "0.5",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:3"
+      },
+      {
+        "absolutePath": "/Users/shermanmonroe/Documents/GitHub/andrew/andrew/contracts/VIP-181/interface/IATN.sol",
+        "file": "../../VIP-181/interface/IATN.sol",
+        "id": 1777,
+        "nodeType": "ImportDirective",
+        "scope": 1794,
+        "sourceUnit": 1886,
+        "src": "24:42:3",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": null,
+        "fullyImplemented": false,
+        "id": 1793,
+        "linearizedBaseContracts": [
+          1793
+        ],
+        "name": "ITrust",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "body": null,
+            "documentation": null,
+            "id": 1784,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isTrustee",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1780,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1779,
+                  "name": "account",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1784,
+                  "src": "110:15:3",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 1778,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "110:7:3",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "109:17:3"
+            },
+            "returnParameters": {
+              "id": 1783,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1782,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1784,
+                  "src": "150:4:3",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 1781,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "150:4:3",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "149:6:3"
+            },
+            "scope": 1793,
+            "src": "91:66:3",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "external"
+          },
+          {
+            "body": null,
+            "documentation": null,
+            "id": 1787,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "renounceTrust",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1785,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "185:2:3"
+            },
+            "returnParameters": {
+              "id": 1786,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "197:0:3"
+            },
+            "scope": 1793,
+            "src": "163:35:3",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "external"
+          },
+          {
+            "body": null,
+            "documentation": null,
+            "id": 1792,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getAuthority",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1788,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "229:2:3"
+            },
+            "returnParameters": {
+              "id": 1791,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1790,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1792,
+                  "src": "250:4:3",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IATN_$1885",
+                    "typeString": "contract IATN"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 1789,
+                    "name": "IATN",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 1885,
+                    "src": "250:4:3",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IATN_$1885",
+                      "typeString": "contract IATN"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "249:6:3"
+            },
+            "scope": 1793,
+            "src": "208:48:3",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "external"
+          }
+        ],
+        "scope": 1794,
+        "src": "68:190:3"
+      }
+    ],
+    "src": "0:259:3"
+  },
+  "legacyAST": {
+    "absolutePath": "/Users/shermanmonroe/Documents/GitHub/andrew/andrew/contracts/VIP-180/interface/ITrust.sol",
+    "exportedSymbols": {
+      "ITrust": [
+        1793
+      ]
+    },
+    "id": 1794,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1776,
+        "literals": [
+          "solidity",
+          "^",
+          "0.5",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:3"
+      },
+      {
+        "absolutePath": "/Users/shermanmonroe/Documents/GitHub/andrew/andrew/contracts/VIP-181/interface/IATN.sol",
+        "file": "../../VIP-181/interface/IATN.sol",
+        "id": 1777,
+        "nodeType": "ImportDirective",
+        "scope": 1794,
+        "sourceUnit": 1886,
+        "src": "24:42:3",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": null,
+        "fullyImplemented": false,
+        "id": 1793,
+        "linearizedBaseContracts": [
+          1793
+        ],
+        "name": "ITrust",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "body": null,
+            "documentation": null,
+            "id": 1784,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isTrustee",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1780,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1779,
+                  "name": "account",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1784,
+                  "src": "110:15:3",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 1778,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "110:7:3",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "109:17:3"
+            },
+            "returnParameters": {
+              "id": 1783,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1782,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1784,
+                  "src": "150:4:3",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 1781,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "150:4:3",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "149:6:3"
+            },
+            "scope": 1793,
+            "src": "91:66:3",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "external"
+          },
+          {
+            "body": null,
+            "documentation": null,
+            "id": 1787,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "renounceTrust",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1785,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "185:2:3"
+            },
+            "returnParameters": {
+              "id": 1786,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "197:0:3"
+            },
+            "scope": 1793,
+            "src": "163:35:3",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "external"
+          },
+          {
+            "body": null,
+            "documentation": null,
+            "id": 1792,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getAuthority",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1788,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "229:2:3"
+            },
+            "returnParameters": {
+              "id": 1791,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1790,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1792,
+                  "src": "250:4:3",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IATN_$1885",
+                    "typeString": "contract IATN"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 1789,
+                    "name": "IATN",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 1885,
+                    "src": "250:4:3",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IATN_$1885",
+                      "typeString": "contract IATN"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "249:6:3"
+            },
+            "scope": 1793,
+            "src": "208:48:3",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "external"
+          }
+        ],
+        "scope": 1794,
+        "src": "68:190:3"
+      }
+    ],
+    "src": "0:259:3"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.0+commit.1d4f565a.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.0.8",
+  "updatedAt": "2019-04-29T03:01:29.175Z",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  }
+}
