@@ -53,6 +53,7 @@ In the A.N.D.R.E.W. design, a trustee is intended to be a smart contract with lo
 * The amount each IDN owner is allowed to withdraw is equal to the earnings of the IDN since the last withdrawal, or if trustees are assigned, then the trustee may withdraw the balance of the contract's escrow
 * The contract must withdraw from the parent escrow at a schedule stipulated by the parent escrow's guild (this term is not captured in the root escrow's contract)
 * The contract must allow for voting by those who hold IDNs under the escrow's purview
+* The contract must self destruct if the destroy function is invoked by an anonymous caller and no poll is active and the contract is not a trustee
 
 In this way, guilds can be formed to manage the sub-appropriation of the community's endowment.
 
