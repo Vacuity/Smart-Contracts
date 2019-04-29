@@ -292,6 +292,7 @@ contract DAO is Escrow {
     // Opens new poll for choosing one of the trustee nominees
     function open(address[] memory trusteeNominees, uint[] memory actionTypes, uint amount) public {
         require(getAuthority().isSubscribed(msg.sender) || proposals.length == 0, 'ANDREW: poll in progress');
+        require(!getAuthority().isSubscribed(msg.sender), 'ANDREW: Authority not allowed');
         require(proposal_fee > 0, 'ANDREW: not accepting submissions');
         require(proposal_fee <= balanceOf(msg.sender), 'ANDREW: insufficient funds');
         require(amount >= proposal_fee, 'ANDREW: insufficient deposit');
