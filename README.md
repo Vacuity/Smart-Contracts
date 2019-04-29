@@ -1,8 +1,8 @@
 # <a name="rn"/>A.N.D.R.E.W.
 Asset, Node, and Digital Rewards Engine Whatchamacallit
 
-## Proof-of-Performance 
-Nodes are rewarded based on the measured, economic utility of the good or service represented by the node. The main characteristics of PoP are:
+## Proof-of-Merit 
+Nodes are rewarded based on the measured, economic utility of the good or service represented by the node. The main characteristics of PoM are:
 * Asset creators assign URIs to their assets
 * Metrics are collected for the assets
 * The asset creator allows their URIs to be tokenized by others
