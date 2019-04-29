@@ -43,4 +43,4 @@ In the case of trustees, if a nominee receives more yay's than nay's, they are g
 
 ### Authority
 
-The role of the Authority node is to initialize polls and authorize community decisions. They serve as a control against malicious, unacceptable, or invalid proposal being executed. The Authority is not elected, but is instead a multisig wallet address appointed by the DAO initiator. When the token is deployed, a list of failsafe Authority addresses must be submitted. At anytime during the token distribution, the trustee can replace the current Authority with any of the failsafes. The failsafe list is immutable.
+The role of the Authority node is to initialize polls and authorize community decisions. They serve as a control against malicious, unacceptable, or invalid proposals being executed. The Authority is not elected, but is instead a multisig wallet address appointed by the DAO initiator. When the token is deployed, a list of failsafe Authority addresses must be submitted. At anytime during the token distribution, a trustee can replace the current Authority with any of the failsafes. The failsafe list is immutable.
