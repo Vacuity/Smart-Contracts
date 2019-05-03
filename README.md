@@ -47,7 +47,7 @@ The role of the Authority node is to initialize polls and authorize community de
 
 ### Trustee
 
-In the A.N.D.R.E.W. design, a trustee is intended to be a smart contract with logic for rewarding the IDN categories under its purview. These contracts must coordinate their withdraws in accordance with rules agreed upon by the community. The community is also responsible for passing the specifications to which trustees must adhere. Below are a few examples:
+In the A.N.D.R.E.W. design, a trustee is intended to be a smart contract with logic for rewarding the IDN categories under its purview. These contracts must coordinate their withdraws from the parent escrow in accordance with rules agreed upon by the community. The community is also responsible for passing the specifications to which trustees must adhere. Below are a few examples:
 
 * The contract must be a token dispensary with withdraw permissions given to IDN owners and/or trustees of an escrow within the dispensary
 * The amount each IDN owner is allowed to withdraw is equal to the earnings of the IDN since the last withdrawal, or if trustees are assigned, then the trustee may withdraw the balance of the contract's escrow
