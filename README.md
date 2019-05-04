@@ -1,4 +1,4 @@
-# <a name="rn"/>A.N.D.R.E.W.
+# <a name="rn"/>Smart Contracts
 Asset, Node, and Digital Rewards Engine Whatchamacallit
 
 ## Proof-of-Merit 
