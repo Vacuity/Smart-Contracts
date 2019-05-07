@@ -25,4 +25,5 @@ contract ATN is IATN, ERC721, ERC721Metadata, ERC721Mintable, ERC721Burnable, Ow
         if (balanceOf(_owner) > 0) return true;
         return false;
     }   
+
 }

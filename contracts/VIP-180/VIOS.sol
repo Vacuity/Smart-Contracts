@@ -254,7 +254,7 @@ contract DAO is Escrow {
     }
 
     uint8 public MAJORITY_DIVISOR_MIN = 2;
-    uint8 public MAJORITY_DIVISOR_MAX = 10;
+    uint8 public MAJORITY_DIVISOR_MAX = 100000000;
     uint8 public majorityDivisor = 2;
 
     // A dynamically-sized array of 'proposal' structs.
@@ -404,6 +404,10 @@ contract DAO is Escrow {
         delete voters[msg.sender];
     }
 
+    function undelegate() public{
+
+    }
+
     function authorize(uint nominateeIndex, uint actionType) public authorityOnly{
         uint yay = proposals[nominateeIndex].yay;
         uint nay = proposals[nominateeIndex].nay;
@@ -537,4 +541,5 @@ contract VIOS is ResilientDAO {
     function balance() public returns (uint256) {
         return balanceOf(msg.sender);
     }
+
 }
