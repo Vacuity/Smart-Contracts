@@ -4,7 +4,7 @@ Asset, Node, and Digital Rewards Engine Whatchamacallit
 ## Proof-of-Merit 
 Nodes are rewarded based on the measured, economic utility of the good or service represented by the node. The main characteristics of PoM are:
 * Asset creators assign URIs to their assets
-* Metrics are collected for the assets
+* Asset metrics are collected by witness nodes (proxies)
 * The asset creator allows their URIs to be tokenized by others
 
 A rewards engine divvies out rewards tokens to URI NFTs in proportion to the NFTs' measured performance. Usage is measured in most cases by sending service request through a proxy, e.g. the RUDI and PBR. Proof-of-Authority is used to determine who is allowed to publish metrics. In A.N.D.R.E.W., a DAO is used to determine which performers receive rewards and in what proportion.
